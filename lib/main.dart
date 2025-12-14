@@ -28,11 +28,11 @@ class EvolutionGameApp extends StatelessWidget {
         },
         '/statistics': (context) => const StatisticsPage(),
         '/settings': (context) => SettingsPage(
-              initialConfig: SimulationConfig(),
-              onConfigSaved: (config) {
-                // Config saved callback
-              },
-            ),
+          initialConfig: SimulationConfig(),
+          onConfigSaved: (config) {
+            // Config saved callback
+          },
+        ),
       },
     );
   }
