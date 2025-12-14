@@ -88,24 +88,21 @@ class _HomePageState extends State<HomePage> {
     return Column(
       children: [
         Container(
-          width: 100,
-          height: 100,
+          width: 120,
+          height: 120,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: Colors.blueAccent.withValues(alpha: 0.4),
-                blurRadius: 20,
+                color: Colors.purpleAccent.withValues(alpha: 0.4),
+                blurRadius: 30,
                 spreadRadius: 5,
               ),
             ],
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Colors.blueAccent, Colors.purpleAccent],
-            ),
           ),
-          child: const Icon(Icons.auto_awesome, size: 50, color: Colors.white),
+          child: ClipOval(
+            child: Image.asset('assets/logo.png', fit: BoxFit.cover),
+          ),
         ),
         const SizedBox(height: 24),
         ShaderMask(

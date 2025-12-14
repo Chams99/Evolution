@@ -1,4 +1,4 @@
-package com.example.evolution_game
+package tn.chames.evolutiongame
 
 import io.flutter.embedding.android.FlutterActivity
 
