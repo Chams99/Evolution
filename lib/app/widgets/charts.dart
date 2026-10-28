@@ -475,3 +475,89 @@ double _niceCeiling(double value) {
   }
   return 10 * magnitude;
 }
+
+/// One trait in two drops over time: the control in cream, the treated drop
+/// in gold, on a shared axis that runs to [duration].
+class CompareChart extends StatelessWidget {
+  const CompareChart({
+    super.key,
+    required this.control,
+    required this.treated,
+    required this.trait,
+    required this.duration,
+    this.height = 150,
+  });
+
+  final List<Sample> control;
+  final List<Sample> treated;
+  final Trait trait;
+  final double duration;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: height,
+      child: RepaintBoundary(
+        child: CustomPaint(painter: _ComparePainter(control, treated, trait, duration), size: Size.infinite),
+      ),
+    );
+  }
+}
+
+class _ComparePainter extends CustomPainter {
+  _ComparePainter(this.control, this.treated, this.trait, this.duration);
+
+  final List<Sample> control;
+  final List<Sample> treated;
+  final Trait trait;
+  final double duration;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final plot = _Plot(size, left: 34, bottomPad: 16);
+    plot.drawFrame(canvas, lines: 3);
+    double value(Sample s) => s.traits[trait]!.mean;
+    final all = [...control.where((s) => s.population > 0), ...treated.where((s) => s.population > 0)].map(value);
+    if (all.isEmpty) return;
+    var low = all.reduce(math.min), high = all.reduce(math.max);
+    final pad = math.max((high - low) * 0.12, high.abs() * 0.04);
+    low -= pad;
+    high += pad;
+    final digits = trait == Trait.sense ? 0 : 2;
+    for (final (samples, color) in [(control, Palette.cream.withValues(alpha: 0.75)), (treated, Palette.gold)]) {
+      final points = [
+        for (final s in samples)
+          if (s.population > 0)
+            Offset(
+              plot.left + plot.width * (s.time / duration).clamp(0, 1),
+              plot.bottom - plot.height * (value(s) - low) / (high - low),
+            ),
+      ];
+      if (points.length < 2) continue;
+      canvas.drawPath(
+        Path()..addPolygon(points, false),
+        Paint()
+          ..color = color
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2
+          ..strokeJoin = StrokeJoin.round,
+      );
+      canvas.drawCircle(points.last, 3, Paint()..color = color);
+    }
+    _text(canvas, high.toStringAsFixed(digits), Offset(0, plot.top - 2), Palette.faint);
+    _text(canvas, low.toStringAsFixed(digits), Offset(0, plot.bottom - 12), Palette.faint);
+    _text(canvas, '0:00', Offset(plot.left, plot.bottom + 3), Palette.faint);
+    _text(
+      canvas,
+      formatClock(duration),
+      Offset(plot.right - 60, plot.bottom + 3),
+      Palette.faint,
+      alignRight: true,
+      width: 60,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_ComparePainter old) => true;
+}

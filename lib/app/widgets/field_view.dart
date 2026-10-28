@@ -96,9 +96,12 @@ class MicrobeDraw {
 
 /// The live view of the drop, scaled to fit while keeping its aspect ratio.
 class FieldView extends StatefulWidget {
-  const FieldView({super.key, required this.controller});
+  const FieldView({super.key, required this.controller, this.interactive = true});
 
   final LabController controller;
+
+  /// False for views that only show a run, such as the two drops of an experiment.
+  final bool interactive;
 
   @override
   State<FieldView> createState() => _FieldViewState();
@@ -123,6 +126,10 @@ class _FieldViewState extends State<FieldView> {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final scale = constraints.maxWidth / config.width;
+          final view = RepaintBoundary(
+            child: CustomPaint(painter: _FieldPainter(controller, _hover), size: Size.infinite),
+          );
+          if (!widget.interactive) return view;
           return MouseRegion(
             cursor: uv ? SystemMouseCursors.precise : SystemMouseCursors.click,
             onHover: (event) => _hover.value = event.localPosition / scale,
@@ -135,9 +142,7 @@ class _FieldViewState extends State<FieldView> {
                 label: uv
                     ? 'Microscope view. Tap to fire a UV pulse.'
                     : 'Microscope view. Tap a microbe to follow it, or empty water to pipette algae.',
-                child: RepaintBoundary(
-                  child: CustomPaint(painter: _FieldPainter(controller, _hover), size: Size.infinite),
-                ),
+                child: view,
               ),
             ),
           );

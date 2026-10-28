@@ -14,6 +14,7 @@ import 'widgets/intro.dart';
 import 'widgets/learn.dart';
 import 'widgets/panels.dart';
 import 'widgets/setup_panel.dart';
+import 'widgets/start.dart';
 import 'widgets/trait_strip.dart';
 
 class LabScreen extends StatefulWidget {
@@ -77,6 +78,7 @@ class _LabScreenState extends State<LabScreen> with SingleTickerProviderStateMix
                 ),
               ),
               if (_controller.showIntro) Positioned.fill(child: IntroOverlay(controller: _controller)),
+              if (_controller.showStart) Positioned.fill(child: StartOverlay(controller: _controller)),
             ],
           ),
         ),
@@ -155,6 +157,8 @@ class _LabScreenState extends State<LabScreen> with SingleTickerProviderStateMix
                           padding: const EdgeInsets.fromLTRB(0, 18, 14, 24),
                           children: [
                             FieldGuide(controller: _controller, overlay: false),
+                            const SizedBox(height: 22),
+                            ExperimentEntry(controller: _controller),
                             const SizedBox(height: 22),
                             LessonList(controller: _controller),
                           ],
@@ -242,6 +246,8 @@ class _LabScreenState extends State<LabScreen> with SingleTickerProviderStateMix
               padding: const EdgeInsets.all(16),
               children: [
                 FieldGuide(controller: _controller, overlay: false),
+                const SizedBox(height: 22),
+                ExperimentEntry(controller: _controller),
                 const SizedBox(height: 22),
                 LessonList(controller: _controller),
               ],

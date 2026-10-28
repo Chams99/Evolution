@@ -1,3 +1,5 @@
+import 'package:evolution/app/experiment.dart';
+import 'package:evolution/app/experiment_screen.dart';
 import 'package:evolution/app/lab_controller.dart';
 import 'package:evolution/app/lab_screen.dart';
 import 'package:evolution/app/lessons.dart';
@@ -239,6 +241,85 @@ void main() {
     expect(find.text('Size'), findsWidgets);
     expect(find.textContaining('measuring'), findsWidgets);
   });
+
+  Future<LabController> pumpStart(WidgetTester tester, Size size) async {
+    tester.view.physicalSize = size;
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final controller = LabController.fromQuery(const {});
+    addTearDown(controller.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildTheme(),
+        home: LabScreen(controller: controller),
+      ),
+    );
+    await frames(tester, 3);
+    return controller;
+  }
+
+  for (final size in const [Size(390, 844), Size(1440, 900)]) {
+    testWidgets('the start screen offers three ways in at ${size.width.toInt()} wide', (tester) async {
+      final controller = await pumpStart(tester, size);
+      expect(find.text('Test an idea'), findsOneWidget);
+      await tester.tap(find.text('Guided experiments'));
+      await frames(tester, 3);
+      expect(controller.showStart, isFalse);
+      expect(controller.lesson?.lesson, lessons.first);
+      expect(find.text('A drop of pond water'), findsNothing);
+    });
+  }
+
+  testWidgets('links to a run skip the start screen', (tester) async {
+    final controller = LabController.fromQuery(const {'preset': 'bloom'});
+    addTearDown(controller.dispose);
+    expect(controller.showStart, isFalse);
+  });
+
+  testWidgets('just watching closes the start screen, and the tour is one tap away', (tester) async {
+    final controller = await pumpStart(tester, const Size(1440, 900));
+    await tester.tap(find.text('New here? Take the one-minute tour'));
+    await frames(tester, 3);
+    expect(find.text('A drop of pond water'), findsOneWidget);
+    controller.dismissIntro();
+    await frames(tester, 2);
+    expect(find.text('Just watch the drop'), findsNothing);
+  });
+
+  for (final size in const [Size(360, 740), Size(1440, 900)]) {
+    testWidgets('an experiment runs from prediction to verdict at ${size.width.toInt()} wide', (tester) async {
+      tester.view.physicalSize = size;
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final experiment = Experiment();
+      addTearDown(experiment.dispose);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildTheme(),
+          home: ExperimentScreen(experiment: experiment),
+        ),
+      );
+      await tester.tap(find.text('Add predators'));
+      await tester.tap(find.text('Size'));
+      await tester.tap(find.text('higher'));
+      await tester.pump();
+      expect(find.textContaining('size will end up higher with predators'), findsOneWidget);
+      await tester.ensureVisible(find.text('Run the experiment'));
+      await tester.pump();
+      await tester.tap(find.text('Run the experiment'));
+      await frames(tester, 3);
+      expect(find.text('CONTROL'), findsOneWidget);
+      await tester.tap(find.text('Finish now'));
+      await frames(tester, 2);
+      expect(find.text('Prediction confirmed'), findsOneWidget);
+      await tester.ensureVisible(find.text('Repeat with a new seed'));
+      await tester.pump();
+      await tester.tap(find.text('Repeat with a new seed'));
+      await frames(tester, 2);
+      expect(experiment.seed, 2);
+      expect(experiment.running, isTrue);
+    });
+  }
 
   test('lessons fast-forward so generations pass', () {
     final controller = LabController()..startLesson(lessons.first);

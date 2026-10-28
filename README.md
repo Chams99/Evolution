@@ -36,6 +36,19 @@ The **Learn** tab has five guided experiments. Each one sets up a sample, asks a
 
 Lessons run at 4× so generations pass quickly (the bottleneck lesson runs at 2× so you can aim the UV pulse). The **favoured** and **selected against** marks on the trait cards are a standardised selection differential: how far the parents of the last 30 seconds of births sit from the population mean. Progress is saved, and a short tour runs on the first visit.
 
+## Test your own idea
+
+The app opens on a choice: **test an idea**, follow the **guided experiments**, or **just watch** the drop. Testing an idea works like a real controlled experiment:
+
+1. **Change one thing**: add predators, remove variation, speed up mutation, shorten lifespans, or double the algae.
+2. **Predict** whether average size, speed or eyesight will end up higher, lower or about the same.
+3. **Run both drops** side by side for 8 simulated minutes. Both start from the same seed, with the same founders in the same places, so your change is the only difference.
+4. **Read the verdict**, worked out from the two drops' real averages, then **repeat with a new seed** to see whether it holds. Some changes win in every drop. Others flip from seed to seed, which is a result too.
+
+The three strongest effects (predators raise size, no variation keeps speed low, faster mutation raises speed) are checked in the tests against seeds 1 to 3.
+
+![An experiment after 8 simulated minutes: the control drop and the drop with predators side by side, average size rising only with predators, and a verdict confirming the prediction](docs/experiment.png)
+
 ## Run the lab
 
 - **Inspect and pipette.** Tap a microbe to follow it: its species, energy, genome, divisions, and its whole living family, circled in the drop. Tap empty water to pipette in algae.
@@ -108,7 +121,8 @@ lib/
     sample.dart       Per-second statistics and CSV export
   app/            The interface
     lab_controller.dart  Runs the world on a fixed timestep; tools, milestones, insight
-    lessons.dart         The five experiments and their goals
+    lessons.dart         The five guided experiments and their goals
+    experiment.dart      Your own experiment: one change, a prediction, a control drop and the verdict
     microbes.dart        Family colours and Latin names
     lab_screen.dart      Side-by-side layout on wide screens, tabs on phones
     widgets/             Microscope view, field guide, charts, panels, lessons, tour

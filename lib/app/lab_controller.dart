@@ -70,8 +70,12 @@ class LabController extends ChangeNotifier {
     }
     final speed = int.tryParse(query['speed'] ?? '');
     if (speed != null && speeds.contains(speed)) controller._speed = speed;
-    // Someone opening a link to a specific run came for that run, not the tour.
-    if (query.keys.any(const {'preset', 'seed', 'at', 'lesson'}.contains)) controller._skipIntro = true;
+    // Someone opening a link to a specific run came for that run; everyone else picks what to do first.
+    if (query.keys.any(const {'preset', 'seed', 'at', 'lesson'}.contains)) {
+      controller._skipIntro = true;
+    } else {
+      controller._showStart = true;
+    }
     return controller;
   }
 
@@ -100,6 +104,7 @@ class LabController extends ChangeNotifier {
   Set<String> _completed = {};
   bool _introSeen = true;
   bool _skipIntro = false;
+  bool _showStart = false;
   bool _showGuide = true;
   bool _progressLoaded = false;
   bool _disposed = false;
@@ -133,7 +138,22 @@ class LabController extends ChangeNotifier {
   Set<String> get completedLessons => _completed;
 
   /// True until the first-run introduction has been dismissed.
-  bool get showIntro => _progressLoaded && !_introSeen && !_skipIntro;
+  bool get showIntro => _progressLoaded && !_introSeen && !_skipIntro && !_showStart;
+
+  /// The start screen: test an idea, follow a lesson, or just watch.
+  bool get showStart => _showStart;
+
+  /// Leaves the start screen; [tour] opens the short introduction instead of the lab.
+  void dismissStart({bool tour = false}) {
+    _showStart = false;
+    if (tour) {
+      _introSeen = false;
+      _skipIntro = false;
+    } else {
+      _skipIntro = true;
+    }
+    notifyListeners();
+  }
 
   /// The inspected organism. It stays readable after it dies.
   Organism? get selected => _selected;
@@ -221,6 +241,20 @@ class LabController extends ChangeNotifier {
     if (_world.extinct) return;
     _playing = false;
     _world.step(_config.ticksPerSecond);
+    _changed();
+    notifyListeners();
+  }
+
+  void pause() {
+    if (!_playing) return;
+    _playing = false;
+    notifyListeners();
+  }
+
+  /// Runs [seconds] of simulated time at once, without drawing in between.
+  void fastForward(double seconds) {
+    if (_world.extinct || seconds <= 0) return;
+    _world.step((seconds * _config.ticksPerSecond).round());
     _changed();
     notifyListeners();
   }
