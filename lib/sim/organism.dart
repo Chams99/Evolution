@@ -1,6 +1,6 @@
 import 'genome.dart';
 
-enum DeathCause { starvation, oldAge, predation }
+enum DeathCause { starvation, oldAge, predation, disaster }
 
 class Organism {
   Organism({
@@ -46,4 +46,21 @@ class Food {
   final double y;
   final double energy;
   bool eaten = false;
+}
+
+enum EventKind { birth, death, strike, famine, rain }
+
+/// Something that happened at a place and time, kept briefly so the view can
+/// draw it (birth ripples, death fades, meteor shockwaves).
+class WorldEvent {
+  const WorldEvent({required this.kind, required this.tick, this.x = 0, this.y = 0, this.size = 0, this.cause});
+
+  final EventKind kind;
+  final int tick;
+  final double x;
+  final double y;
+
+  /// Body radius for births and deaths, blast radius for strikes.
+  final double size;
+  final DeathCause? cause;
 }

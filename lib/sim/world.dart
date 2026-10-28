@@ -32,15 +32,30 @@ class World {
   final SpatialGrid<Food> _foodGrid;
   final SpatialGrid<Organism> _organismGrid;
 
+  /// Events kept for the view; older ones are dropped.
+  static const int eventLimit = 800;
+
+  /// How far back [selection] looks, in simulated seconds.
+  static const double selectionWindow = 30;
+
   final List<Organism> organisms = [];
   final List<Food> food = [];
   final List<Sample> history = [];
+  final List<WorldEvent> events = [];
 
   int tick = 0;
   int _nextId = 0;
   int totalBirths = 0;
+  int totalKills = 0;
+  int totalStruck = 0;
 
-  int _births = 0, _starved = 0, _diedOfAge = 0, _eaten = 0;
+  int _births = 0, _starved = 0, _diedOfAge = 0, _eaten = 0, _struck = 0;
+
+  /// Parent of every organism that ever lived, for family lookups.
+  final Map<int, int?> _parentOf = {};
+
+  /// Parent genomes of recent births, for measuring selection.
+  final List<({int tick, Genome parent})> _birthLog = [];
 
   double get seconds => tick / config.ticksPerSecond;
 
@@ -93,6 +108,79 @@ class World {
     }
   }
 
+  /// Meteor strike: kills every organism and destroys all food within [radius].
+  /// Returns how many organisms died.
+  int strike(double x, double y, {double radius = 70}) {
+    var killed = 0;
+    for (final o in organisms) {
+      final dx = o.x - x, dy = o.y - y;
+      if (dx * dx + dy * dy <= (radius + o.radius) * (radius + o.radius)) {
+        _die(o, DeathCause.disaster);
+        killed++;
+      }
+    }
+    organisms.removeWhere((o) => !o.alive);
+    food.removeWhere((f) {
+      final dx = f.x - x, dy = f.y - y;
+      return dx * dx + dy * dy <= radius * radius;
+    });
+    _struck += killed;
+    totalStruck += killed;
+    _event(WorldEvent(kind: EventKind.strike, tick: tick, x: x, y: y, size: radius));
+    return killed;
+  }
+
+  /// Famine: removes a share of the food on the ground. Returns how many items went.
+  int famine({double share = 0.75}) {
+    final before = food.length;
+    food.removeWhere((_) => _rng.chance(share));
+    _event(WorldEvent(kind: EventKind.famine, tick: tick));
+    return before - food.length;
+  }
+
+  /// Food rain: scatters [count] items across the whole world.
+  void foodRain({int count = 80}) {
+    for (var i = 0; i < count && food.length < config.maxFood; i++) {
+      _spawnFood();
+    }
+    _event(WorldEvent(kind: EventKind.rain, tick: tick));
+  }
+
+  /// Standardised selection differential for [trait] over the last
+  /// [selectionWindow] seconds: how far the parents of recent births sit from
+  /// the population mean, in standard deviations. Positive means the trait is
+  /// currently favoured. Null when there is too little data to say.
+  double? selection(Trait trait) {
+    if (organisms.length < 6) return null;
+    final since = tick - selectionWindow * config.ticksPerSecond;
+    var count = 0;
+    var parentSum = 0.0;
+    for (final entry in _birthLog) {
+      if (entry.tick >= since) {
+        parentSum += entry.parent[trait];
+        count++;
+      }
+    }
+    if (count < 8) return null;
+    final now = TraitSummary.of(organisms.map((o) => o.genome[trait]));
+    if (now.deviation < 1e-9) return 0;
+    return (parentSum / count - now.mean) / now.deviation;
+  }
+
+  /// Whether [organism] descends from the organism with [ancestorId].
+  bool descendsFrom(Organism organism, int ancestorId) {
+    var parent = organism.parentId;
+    var guard = 0;
+    while (parent != null && guard++ < 100000) {
+      if (parent == ancestorId) return true;
+      parent = _parentOf[parent];
+    }
+    return false;
+  }
+
+  /// Living organisms descended from [ancestorId].
+  int livingDescendants(int ancestorId) => organisms.where((o) => descendsFrom(o, ancestorId)).length;
+
   void step([int ticks = 1]) {
     for (var i = 0; i < ticks && !extinct; i++) {
       _tick();
@@ -102,16 +190,16 @@ class World {
   void _populate() {
     for (var i = 0; i < config.initialPopulation; i++) {
       final genome = config.founder.mutate(_rng, strength: config.founderVariation, limits: config.limits);
-      organisms.add(
-        Organism(
-          id: _nextId++,
-          genome: genome,
-          x: _rng.range(20, config.width - 20),
-          y: _rng.range(20, config.height - 20),
-          energy: reproductionThreshold(genome) * 0.55,
-          heading: _rng.range(0, 2 * math.pi),
-        ),
+      final founder = Organism(
+        id: _nextId++,
+        genome: genome,
+        x: _rng.range(20, config.width - 20),
+        y: _rng.range(20, config.height - 20),
+        energy: reproductionThreshold(genome) * 0.55,
+        heading: _rng.range(0, 2 * math.pi),
       );
+      organisms.add(founder);
+      _parentOf[founder.id] = null;
     }
     final startingFood = (config.foodPerSecond * 6).round().clamp(0, config.maxFood).toInt();
     for (var i = 0; i < startingFood; i++) {
@@ -267,11 +355,24 @@ class World {
     });
     final prey = victim;
     if (prey != null) {
-      prey.deathCause = DeathCause.predation;
+      _die(prey, DeathCause.predation);
       _eaten++;
+      totalKills++;
       organism.energy += prey.energy * 0.6 + config.foodEnergy * prey.genome.size * prey.genome.size * 0.3;
       organism.kills++;
     }
+  }
+
+  void _die(Organism organism, DeathCause cause) {
+    organism.deathCause = cause;
+    _event(
+      WorldEvent(kind: EventKind.death, tick: tick, x: organism.x, y: organism.y, size: organism.radius, cause: cause),
+    );
+  }
+
+  void _event(WorldEvent event) {
+    events.add(event);
+    if (events.length > eventLimit) events.removeRange(0, events.length - eventLimit);
   }
 
   double _tickCost(Genome g) {
@@ -291,10 +392,10 @@ class World {
     organism.energy -= _tickCost(organism.genome);
     if (organism.energy <= 0) {
       organism.energy = 0;
-      organism.deathCause = DeathCause.starvation;
+      _die(organism, DeathCause.starvation);
       _starved++;
     } else if (organism.age >= config.lifespan * config.ticksPerSecond) {
-      organism.deathCause = DeathCause.oldAge;
+      _die(organism, DeathCause.oldAge);
       _diedOfAge++;
     }
   }
@@ -310,9 +411,15 @@ class World {
     _births++;
     totalBirths++;
 
+    _birthLog.add((tick: tick, parent: parent.genome));
+    final cutoff = tick - selectionWindow * config.ticksPerSecond;
+    if (_birthLog.length > 64 && _birthLog.first.tick < cutoff) {
+      _birthLog.removeWhere((entry) => entry.tick < cutoff);
+    }
+
     final angle = _rng.range(0, 2 * math.pi);
     final gap = parent.radius + genome.size * Organism.baseRadius;
-    return Organism(
+    final child = Organism(
       id: _nextId++,
       genome: genome,
       x: (parent.x + math.cos(angle) * gap)
@@ -326,6 +433,9 @@ class World {
       generation: parent.generation + 1,
       parentId: parent.id,
     );
+    _parentOf[child.id] = parent.id;
+    _event(WorldEvent(kind: EventKind.birth, tick: tick, x: child.x, y: child.y, size: child.radius));
+    return child;
   }
 
   void _shuffle(List<Organism> list) {
@@ -348,11 +458,12 @@ class World {
         starved: _starved,
         diedOfAge: _diedOfAge,
         eaten: _eaten,
+        struck: _struck,
         maxGeneration: maxGeneration,
         foodSupply: foodSupply,
       ),
     );
     if (history.length > historyLimit) history.removeAt(0);
-    _births = _starved = _diedOfAge = _eaten = 0;
+    _births = _starved = _diedOfAge = _eaten = _struck = 0;
   }
 }

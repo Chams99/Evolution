@@ -41,6 +41,7 @@ class Sample {
     required this.starved,
     required this.diedOfAge,
     required this.eaten,
+    this.struck = 0,
     required this.maxGeneration,
     required this.foodSupply,
   });
@@ -57,6 +58,9 @@ class Sample {
   final int diedOfAge;
   final int eaten;
 
+  /// Killed by meteor strikes.
+  final int struck;
+
   final int maxGeneration;
 
   /// Seasonal food multiplier at this moment.
@@ -66,7 +70,7 @@ class Sample {
 /// Run history as CSV, one row per sample.
 String samplesToCsv(List<Sample> samples) {
   final buffer = StringBuffer(
-    'time_s,population,food,births,starved,died_of_age,eaten,max_generation,food_supply,'
+    'time_s,population,food,births,starved,died_of_age,eaten,struck,max_generation,food_supply,'
     'size_mean,size_sd,speed_mean,speed_sd,sense_mean,sense_sd\n',
   );
   String f(double value, [int digits = 3]) => value.toStringAsFixed(digits);
@@ -81,6 +85,7 @@ String samplesToCsv(List<Sample> samples) {
         s.starved,
         s.diedOfAge,
         s.eaten,
+        s.struck,
         s.maxGeneration,
         f(s.foodSupply),
         f(size.mean),

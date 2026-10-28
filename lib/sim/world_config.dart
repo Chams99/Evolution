@@ -77,6 +77,7 @@ class WorldConfig {
   WorldConfig copyWith({
     int? seed,
     int? initialPopulation,
+    double? founderVariation,
     double? foodPerSecond,
     double? foodEnergy,
     double? seasonLength,
@@ -92,7 +93,7 @@ class WorldConfig {
       ticksPerSecond: ticksPerSecond,
       initialPopulation: initialPopulation ?? this.initialPopulation,
       founder: founder,
-      founderVariation: founderVariation,
+      founderVariation: founderVariation ?? this.founderVariation,
       foodPerSecond: foodPerSecond ?? this.foodPerSecond,
       foodEnergy: foodEnergy ?? this.foodEnergy,
       maxFood: maxFood,

@@ -121,4 +121,80 @@ void main() {
     expect(lines.first, startsWith('time_s,population,food'));
     expect(lines, hasLength(world.history.length + 1));
   });
+
+  group('disasters', () {
+    test('a meteor kills everything inside its radius and nothing outside', () {
+      final world = World(const WorldConfig(initialPopulation: 0, foodPerSecond: 0))..food.clear();
+      world.organisms.addAll([
+        Organism(id: 1, genome: const Genome(size: 1, speed: 1, sense: 40), x: 100, y: 100, energy: 50, heading: 0),
+        Organism(id: 2, genome: const Genome(size: 1, speed: 1, sense: 40), x: 150, y: 100, energy: 50, heading: 0),
+        Organism(id: 3, genome: const Genome(size: 1, speed: 1, sense: 40), x: 400, y: 400, energy: 50, heading: 0),
+      ]);
+      world.scatterFood(110, 110, count: 5, spread: 5);
+      world.scatterFood(500, 500, count: 5, spread: 5);
+
+      expect(world.strike(100, 100, radius: 60), 2);
+      expect(world.organisms.map((o) => o.id), [3]);
+      expect(world.food, hasLength(5));
+      expect(world.totalStruck, 2);
+      expect(world.events.where((e) => e.cause == DeathCause.disaster), hasLength(2));
+      expect(world.events.last.kind, EventKind.strike);
+    });
+
+    test('famine removes most food and food rain adds it back', () {
+      final world = World(const WorldConfig(seed: 5, maxFood: 400));
+      world.foodRain(count: 200);
+      final before = world.food.length;
+      final removed = world.famine(share: 0.75);
+      expect(removed, greaterThan(before * 0.6));
+      expect(world.food.length, before - removed);
+    });
+  });
+
+  group('selection', () {
+    test('needs enough births before it reports anything', () {
+      expect(World(const WorldConfig()).selection(Trait.speed), isNull);
+    });
+
+    test('is positive when faster parents leave the offspring', () {
+      final world = World(const WorldConfig(initialPopulation: 0, foodPerSecond: 0, mutationStrength: 0));
+      world.food.clear();
+      for (var i = 0; i < 20; i++) {
+        final fast = i < 10;
+        world.organisms.add(
+          Organism(
+            id: 1000 + i,
+            genome: Genome(size: 1, speed: fast ? 2 : 1, sense: 8),
+            x: 40.0 + i * 40,
+            y: 300,
+            energy: fast ? 1000 : 60,
+            heading: 0,
+          )..age = 600,
+        );
+      }
+      world.step();
+      expect(world.selection(Trait.speed), greaterThan(0.5));
+      expect(world.selection(Trait.size), 0);
+    });
+  });
+
+  test('descendants are traced through every generation', () {
+    final world = World(const WorldConfig(initialPopulation: 1, foodPerSecond: 0, mutationStrength: 0));
+    world.food.clear();
+    final founder = world.organisms.single;
+    for (var generation = 0; generation < 3; generation++) {
+      for (final o in world.organisms) {
+        o
+          ..energy = 2000
+          ..age = 600;
+      }
+      world.step();
+    }
+    expect(world.organisms.length, 8);
+    expect(world.livingDescendants(founder.id), 7);
+    final grandchild = world.organisms.firstWhere((o) => o.generation == 3);
+    expect(world.descendsFrom(grandchild, founder.id), isTrue);
+    expect(world.descendsFrom(founder, grandchild.id), isFalse);
+    expect(world.events.where((e) => e.kind == EventKind.birth), hasLength(7));
+  });
 }
