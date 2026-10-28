@@ -47,7 +47,7 @@ The app opens on a choice: **test an idea**, follow the **guided experiments**, 
 
 The three strongest effects (predators raise size, no variation keeps speed low, faster mutation raises speed) are checked in the tests against seeds 1 to 3.
 
-![An experiment after 8 simulated minutes: the control drop and the drop with predators side by side, average size rising only with predators, and a verdict confirming the prediction](docs/experiment.png)
+![An experiment after 8 simulated minutes: average size rising only in the drop with predators, the whole population shifting toward larger sizes, and a verdict confirming the prediction](docs/experiment.png)
 
 ## Run the lab
 

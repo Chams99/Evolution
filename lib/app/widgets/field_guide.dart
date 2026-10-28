@@ -94,52 +94,10 @@ class _GlyphPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final c = size.center(Offset.zero) + const Offset(4, 0);
-    final sprites = Sprites.current.value;
     final stain = familyColor(0);
-    void cell(Offset at, double r, {Color? color, double speed = 1, double sense = 40, double energy = 0.5}) {
-      if (sprites != null) {
-        paintMicrobeFigures(canvas, sprites, [
-          MicrobeDraw(
-            center: at,
-            radius: r,
-            color: color ?? stain,
-            heading: 0,
-            speed: speed,
-            sense: sense,
-            energyShare: energy,
-            seed: 3,
-          ),
-        ], 1.3);
-      } else {
-        paintMicrobe(
-          canvas,
-          at,
-          r,
-          color: color ?? stain,
-          heading: 0,
-          speed: speed,
-          sense: sense,
-          energyShare: energy,
-          phase: 1.3,
-          seed: 3,
-        );
-      }
-    }
-
-    void algae(Offset at, double r, int variant) {
-      if (sprites == null) return paintAlgae(canvas, at, r);
-      final level = sprites.forAlgae(r);
-      canvas.drawImageRect(
-        level.algae,
-        level.algaeFrame(variant),
-        Rect.fromCenter(
-          center: at,
-          width: r / Sprites.algaeRadius * Sprites.algaeFrame,
-          height: r / Sprites.algaeRadius * Sprites.algaeFrame,
-        ),
-        Paint()..filterQuality = FilterQuality.medium,
-      );
-    }
+    void cell(Offset at, double r, {Color? color, double speed = 1, double sense = 40, double energy = 0.5}) =>
+        paintSpecimen(canvas, at, r, color: color ?? stain, speed: speed, sense: sense, energy: energy);
+    void algae(Offset at, double r, int variant) => paintAlgaeSpecimen(canvas, at, r, variant);
 
     switch (glyph) {
       case _Glyph.cell:

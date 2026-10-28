@@ -71,6 +71,66 @@ void paintMicrobeFigures(Canvas canvas, Sprites sprites, List<MicrobeDraw> cells
   }
 }
 
+/// One microbe for a legend or an illustration, with the rendered figure once
+/// it has loaded and the vector drawing before that.
+void paintSpecimen(
+  Canvas canvas,
+  Offset at,
+  double r, {
+  required Color color,
+  double heading = 0,
+  double speed = 1,
+  double sense = 40,
+  double energy = 0.5,
+  int seed = 3,
+}) {
+  final sprites = Sprites.current.value;
+  if (sprites != null) {
+    paintMicrobeFigures(canvas, sprites, [
+      MicrobeDraw(
+        center: at,
+        radius: r,
+        color: color,
+        heading: heading,
+        speed: speed,
+        sense: sense,
+        energyShare: energy,
+        seed: seed,
+      ),
+    ], 1.3);
+  } else {
+    paintMicrobe(
+      canvas,
+      at,
+      r,
+      color: color,
+      heading: heading,
+      speed: speed,
+      sense: sense,
+      energyShare: energy,
+      phase: 1.3,
+      seed: seed,
+    );
+  }
+}
+
+/// One alga (a single cell, a pair or a colony of four) for a legend or an illustration.
+void paintAlgaeSpecimen(Canvas canvas, Offset at, double r, int variant) {
+  final sprites = Sprites.current.value;
+  if (sprites == null) return paintAlgae(canvas, at, r);
+  final level = sprites.forAlgae(r);
+  canvas.drawImageRect(
+    level.algae,
+    level.algaeFrame(variant),
+    Rect.fromCenter(
+      center: at,
+      width: r / Sprites.algaeRadius * Sprites.algaeFrame,
+      height: r / Sprites.algaeRadius * Sprites.algaeFrame,
+    ),
+    Paint()..filterQuality = FilterQuality.medium,
+  );
+}
+
 /// What the view needs to draw one microbe.
 class MicrobeDraw {
   const MicrobeDraw({

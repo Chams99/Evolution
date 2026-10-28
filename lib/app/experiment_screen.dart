@@ -1,9 +1,14 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
 import '../sim/genome.dart';
+import '../sim/organism.dart';
 import 'experiment.dart';
 import 'lab_controller.dart';
+import 'microbes.dart';
+import 'sprites.dart';
 import 'theme.dart';
 import 'widgets/charts.dart';
 import 'widgets/field_view.dart';
@@ -159,6 +164,7 @@ class _Setup extends StatelessWidget {
                   SizedBox(
                     width: width,
                     child: _Option(
+                      treatment: t,
                       minHeight: columns == 2 ? 92 : 0,
                       title: t.title,
                       detail: t.detail,
@@ -182,6 +188,7 @@ class _Setup extends StatelessWidget {
             for (final t in Trait.values)
               _Chip(
                 label: t.label,
+                icon: Palette.traitIcon(t),
                 selected: x.trait == t,
                 onTap: () => x.choose(trait: t),
               ),
@@ -189,6 +196,11 @@ class _Setup extends StatelessWidget {
             for (final d in Direction.values)
               _Chip(
                 label: d.label,
+                icon: switch (d) {
+                  Direction.higher => Icons.arrow_upward,
+                  Direction.lower => Icons.arrow_downward,
+                  Direction.same => Icons.drag_handle,
+                },
                 selected: x.direction == d,
                 onTap: () => x.choose(direction: d),
               ),
@@ -248,6 +260,7 @@ class _Step extends StatelessWidget {
 
 class _Option extends StatelessWidget {
   const _Option({
+    required this.treatment,
     required this.title,
     required this.detail,
     required this.selected,
@@ -255,6 +268,7 @@ class _Option extends StatelessWidget {
     this.minHeight = 0,
   });
 
+  final Treatment treatment;
   final double minHeight;
   final String title;
   final String detail;
@@ -281,6 +295,8 @@ class _Option extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              _TreatmentPicture(treatment),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -305,9 +321,10 @@ class _Option extends StatelessWidget {
 }
 
 class _Chip extends StatelessWidget {
-  const _Chip({required this.label, required this.selected, required this.onTap});
+  const _Chip({required this.label, required this.icon, required this.selected, required this.onTap});
 
   final String label;
+  final IconData icon;
   final bool selected;
   final VoidCallback onTap;
 
@@ -321,19 +338,26 @@ class _Chip extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 140),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+          padding: const EdgeInsets.fromLTRB(11, 7, 14, 7),
           decoration: BoxDecoration(
             color: selected ? Palette.gold : Colors.transparent,
             borderRadius: BorderRadius.circular(18),
             border: Border.all(color: selected ? Palette.gold : Palette.lineStrong),
           ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: selected ? Palette.surface : Palette.cream,
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 15, color: selected ? Palette.surface : Palette.muted),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: selected ? Palette.surface : Palette.cream,
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -418,6 +442,20 @@ class _Run extends StatelessWidget {
             trait: x.trait,
             duration: Experiment.duration,
           ),
+        ),
+        const SizedBox(height: 20),
+        const Text('WHERE EVERY MICROBE SITS NOW', style: Styles.label),
+        const SizedBox(height: 4),
+        Text(
+          'Each bar is the share of a drop at that ${x.trait.label.toLowerCase()}. Outline: the control. '
+          'Gold: ${x.treatment.phrase}. The lines mark each average.',
+          style: theme.bodySmall,
+        ),
+        const SizedBox(height: 10),
+        ValueListenableBuilder(
+          valueListenable: treated.samples,
+          builder: (context, _, _) =>
+              TraitDistribution(control: control.world.organisms, treated: treated.world.organisms, trait: x.trait),
         ),
         if (x.done) ...[const SizedBox(height: 20), _Verdict(experiment: x)],
       ],
@@ -566,4 +604,70 @@ class _Verdict extends StatelessWidget {
       ),
     );
   }
+}
+
+/// A small piece of slide showing what a change does, drawn with the same
+/// figures as the live view.
+class _TreatmentPicture extends StatelessWidget {
+  const _TreatmentPicture(this.treatment);
+
+  final Treatment treatment;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(6),
+      child: SizedBox(width: 68, height: 50, child: CustomPaint(painter: _TreatmentPainter(treatment))),
+    );
+  }
+}
+
+class _TreatmentPainter extends CustomPainter {
+  _TreatmentPainter(this.treatment) : super(repaint: Sprites.current);
+
+  final Treatment treatment;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    canvas.drawRect(
+      rect,
+      Paint()..shader = const RadialGradient(radius: 0.9, colors: [Slide.bright, Slide.brightEdge]).createShader(rect),
+    );
+    void cell(double x, double y, double r, int family, {double heading = 0, double speed = 1, double sense = 50}) =>
+        paintSpecimen(
+          canvas,
+          Offset(x, y),
+          r,
+          color: familyColor(family),
+          heading: heading,
+          speed: speed,
+          sense: sense,
+        );
+    switch (treatment) {
+      case Treatment.predators:
+        cell(20, 27, 3.4, 1, heading: math.pi, speed: 1.6);
+        cell(46, 24, 9, 5, heading: math.pi, sense: 90);
+      case Treatment.noVariation:
+        for (final x in [16.0, 34.0, 52.0]) {
+          cell(x, 25, 4.4, 2);
+        }
+      case Treatment.fastMutation:
+        cell(15, 30, 3, 1, speed: 0.4, sense: 20);
+        cell(33, 20, 6, 4, speed: 2.4, sense: 140);
+        cell(53, 31, 4, 6, speed: 1.2);
+      case Treatment.shortLives:
+        paintGhost(canvas, const Offset(20, 26), 6, DeathCause.oldAge, 0.15);
+        cell(46, 24, 5.4, 3);
+      case Treatment.moreAlgae:
+        const spots = [(10, 12, 0), (24, 41, 1), (52, 10, 2), (60, 38, 0), (36, 8, 0), (12, 35, 2), (45, 42, 0)];
+        for (final (x, y, v) in spots) {
+          paintAlgaeSpecimen(canvas, Offset(x.toDouble(), y.toDouble()), v == 0 ? 3 : 4.2, v);
+        }
+        cell(34, 25, 5.4, 0);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_TreatmentPainter old) => old.treatment != treatment;
 }

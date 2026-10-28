@@ -561,3 +561,121 @@ class _ComparePainter extends CustomPainter {
   @override
   bool shouldRepaint(_ComparePainter old) => true;
 }
+
+/// Where every microbe in two drops sits on one trait: each bar is the share
+/// of a drop at that value. The control is an outline, the treated drop is
+/// filled gold, and a tick marks each drop's average.
+class TraitDistribution extends StatelessWidget {
+  const TraitDistribution({
+    super.key,
+    required this.control,
+    required this.treated,
+    required this.trait,
+    this.height = 130,
+  });
+
+  final List<Organism> control;
+  final List<Organism> treated;
+  final Trait trait;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: height,
+      child: RepaintBoundary(
+        child: CustomPaint(
+          painter: _DistributionPainter(
+            [for (final o in control) o.genome[trait]],
+            [for (final o in treated) o.genome[trait]],
+            trait,
+          ),
+          size: Size.infinite,
+        ),
+      ),
+    );
+  }
+}
+
+class _DistributionPainter extends CustomPainter {
+  _DistributionPainter(this.control, this.treated, this.trait);
+
+  final List<double> control;
+  final List<double> treated;
+  final Trait trait;
+
+  static const _bins = 26;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final plot = _Plot(size, left: 4, bottomPad: 16);
+    plot.drawFrame(canvas, lines: 1);
+    final all = [...control, ...treated];
+    if (all.isEmpty) return;
+    var low = all.reduce(math.min), high = all.reduce(math.max);
+    final mid = (low + high) / 2;
+    final span = math.max(high - low, mid.abs() * 0.3);
+    low = mid - span * 0.56;
+    high = mid + span * 0.56;
+    List<double> shares(List<double> values) {
+      final counts = List<double>.filled(_bins, 0);
+      for (final v in values) {
+        counts[((v - low) / (high - low) * _bins).floor().clamp(0, _bins - 1)]++;
+      }
+      return [for (final c in counts) values.isEmpty ? 0 : c / values.length];
+    }
+
+    final a = shares(control), b = shares(treated);
+    final top = math.max(a.reduce(math.max), b.reduce(math.max)) * 1.1;
+    final w = plot.width / _bins;
+    double yOf(double share) => plot.bottom - plot.height * (share / top).clamp(0, 1);
+
+    final fill = Paint()..color = Palette.gold.withValues(alpha: 0.62);
+    for (var i = 0; i < _bins; i++) {
+      if (b[i] <= 0) continue;
+      canvas.drawRect(Rect.fromLTRB(plot.left + i * w + 1, yOf(b[i]), plot.left + (i + 1) * w - 1, plot.bottom), fill);
+    }
+    final outline = Path()..moveTo(plot.left, plot.bottom);
+    for (var i = 0; i < _bins; i++) {
+      outline
+        ..lineTo(plot.left + i * w, yOf(a[i]))
+        ..lineTo(plot.left + (i + 1) * w, yOf(a[i]));
+    }
+    outline.lineTo(plot.right, plot.bottom);
+    canvas.drawPath(
+      outline,
+      Paint()
+        ..color = Palette.cream.withValues(alpha: 0.8)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5,
+    );
+
+    final digits = trait == Trait.sense ? 0 : 2;
+    for (final (values, color) in [(control, Palette.cream), (treated, Palette.gold)]) {
+      if (values.isEmpty) continue;
+      final mean = values.reduce((x, y) => x + y) / values.length;
+      final x = plot.left + plot.width * (mean - low) / (high - low);
+      canvas.drawLine(
+        Offset(x, plot.top),
+        Offset(x, plot.bottom),
+        Paint()
+          ..color = color
+          ..strokeWidth = 1.5,
+      );
+      canvas.drawCircle(Offset(x, plot.top + 2), 3, Paint()..color = color);
+    }
+    _text(canvas, low.toStringAsFixed(digits), Offset(plot.left, plot.bottom + 3), Palette.faint);
+    _text(canvas, trait.label.toUpperCase(), Offset(plot.left + plot.width / 2 - 16, plot.bottom + 3), Palette.faint);
+    _text(
+      canvas,
+      high.toStringAsFixed(digits),
+      Offset(plot.right - 40, plot.bottom + 3),
+      Palette.faint,
+      alignRight: true,
+      width: 40,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_DistributionPainter old) => true;
+}
