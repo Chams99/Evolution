@@ -12,7 +12,8 @@ class Organism {
     required this.heading,
     this.generation = 0,
     this.parentId,
-  });
+    int? family,
+  }) : family = family ?? id;
 
   /// Radius of a size-1 body, in world units.
   static const double baseRadius = 5;
@@ -21,6 +22,9 @@ class Organism {
   final Genome genome;
   final int generation;
   final int? parentId;
+
+  /// Id of the founder this organism descends from. Founders are their own family.
+  final int family;
 
   double x;
   double y;
@@ -53,12 +57,29 @@ enum EventKind { birth, death, strike, famine, rain }
 /// Something that happened at a place and time, kept briefly so the view can
 /// draw it (birth ripples, death fades, meteor shockwaves).
 class WorldEvent {
-  const WorldEvent({required this.kind, required this.tick, this.x = 0, this.y = 0, this.size = 0, this.cause});
+  const WorldEvent({
+    required this.kind,
+    required this.tick,
+    this.x = 0,
+    this.y = 0,
+    this.size = 0,
+    this.cause,
+    this.fromX,
+    this.fromY,
+    this.family,
+  });
 
   final EventKind kind;
   final int tick;
   final double x;
   final double y;
+
+  /// For births: where the parent was, so the view can draw the division.
+  final double? fromX;
+  final double? fromY;
+
+  /// Family of the organism involved, if any.
+  final int? family;
 
   /// Body radius for births and deaths, blast radius for strikes.
   final double size;

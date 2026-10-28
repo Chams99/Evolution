@@ -53,14 +53,14 @@ final lessons = <Lesson>[
   Lesson(
     id: 'fastest',
     title: 'Survival of the fastest',
-    question: 'Food goes to whoever reaches it first. What happens to speed over many generations?',
+    question: 'Algae go to whoever reaches them first. What happens to swimming speed over many generations?',
     preset: Preset.bloom,
     config: Preset.bloom.config.copyWith(seed: 2),
-    watch: 'Watch the Speed chart, and the bodies turning from terracotta to gold.',
+    watch: 'Watch the Speed card under the drop, and the tails (flagella) getting longer and faster.',
     explanation:
-        'Faster organisms reach food first, store energy sooner and split more often. Their children inherit '
-        'the speed, so each generation starts a little faster. Nobody decides to get faster: slower lines simply '
-        'leave fewer descendants. Running costs energy with the square of speed, which is what stops the rise.',
+        'Faster microbes reach algae first, fill up sooner and divide more often. Their daughters inherit the '
+        'speed, so each generation starts a little faster. Nobody decides to get faster: slower lines simply '
+        'leave fewer descendants. Swimming costs energy with the square of speed, which is what stops the rise.',
     evaluate: (world, _) {
       final change = _change(world, Trait.speed);
       return LessonProgress(change / 0.3, 'Average speed ${_percent(change)} of the +30% goal');
@@ -69,29 +69,29 @@ final lessons = <Lesson>[
   Lesson(
     id: 'seasons',
     title: 'Boom and bust',
-    question: 'Food comes and goes with the seasons. Does the population just follow it?',
+    question: 'The lamp brightens and dims, and algae grow with it. Does the population just follow the light?',
     preset: Preset.drought,
     config: Preset.drought.config.copyWith(seed: 1),
-    watch: 'Compare the white population line with the shaded food supply behind it.',
+    watch: 'Watch the drop darken and brighten, and the population line against the shaded light cycle.',
     explanation:
-        'The population peaks after the food does and crashes after it, because organisms live on stored energy '
-        'for a while before they starve. The lag turns seasons into boom-and-bust cycles. Each crash is also a '
-        'test: whoever burns the least energy is most likely to make it to the next wet season.',
+        'The population peaks after the algae do and crashes after them, because microbes live on stored energy '
+        'for a while before they starve. That lag turns the light cycle into boom and bust. Each crash is also a '
+        'test: whoever burns the least energy is most likely to make it to the next bright spell.',
     evaluate: (world, _) {
-      final seasons = world.seconds / world.config.seasonLength;
-      return LessonProgress(seasons / 2, 'Season ${seasons.floor().clamp(0, 2) + (seasons >= 2 ? 0 : 1)} of 2');
+      final cycles = world.seconds / world.config.seasonLength;
+      return LessonProgress(cycles / 2, 'Light cycle ${cycles.floor().clamp(0, 2) + (cycles >= 2 ? 0 : 1)} of 2');
     },
   ),
   Lesson(
     id: 'arms-race',
     title: 'Arms race',
-    question: 'Large organisms can now eat smaller ones. How do hunters and hunted respond?',
+    question: 'Big microbes can now engulf smaller ones. How do hunters and hunted respond?',
     preset: Preset.hunters,
     config: Preset.hunters.config.copyWith(seed: 2),
-    watch: 'Watch Size and Sense climb together, and the kills in the population summary.',
+    watch: 'Watch the cells grow larger and their red eyespots grow bigger, and the bursts where one is engulfed.',
     explanation:
-        'Being big lets you eat others, so size spreads. Being eaten is the strongest selection there is, so '
-        'prey that spot hunters early survive, and sense spreads too. Each side raises the bar for the other: '
+        'Being big lets you engulf others, so size spreads. Being eaten is the strongest selection there is, so '
+        'prey that spot hunters early survive, and eyesight spreads too. Each side raises the bar for the other: '
         'an evolutionary arms race. It only stops when the energy cost of the next step outweighs the gain.',
     evaluate: (world, _) {
       final size = _change(world, Trait.size) / 0.25;
@@ -105,11 +105,11 @@ final lessons = <Lesson>[
   Lesson(
     id: 'variation',
     title: 'No variation, no evolution',
-    question: 'Every organism is now identical and children are exact copies. Can anything evolve?',
+    question: 'Every microbe in this drop is a perfect clone, and daughters are exact copies. Can anything evolve?',
     config: const WorldConfig(seed: 3, mutationStrength: 0, founderVariation: 0),
-    watch: 'Watch the trait bands stay flat, and the selection markers stay empty.',
+    watch: 'Watch the trait cards stay flat. Some families still win, but by luck alone: they are all the same.',
     explanation:
-        'Selection can only pick between differences. With identical organisms and no mutation there is nothing '
+        'Selection can only pick between differences. With identical clones and no mutation there is nothing '
         'to pick from, so the traits cannot move however long you wait. Variation is the raw material of '
         'evolution, and mutation is what keeps supplying it. Try any other lesson to see the contrast.',
     evaluate: (world, _) {
@@ -120,15 +120,16 @@ final lessons = <Lesson>[
   Lesson(
     id: 'bottleneck',
     title: 'Bottleneck',
-    question: 'A catastrophe wipes out most of the population at random. What do the survivors pass on?',
+    question: 'A disaster wipes out most of the drop at random. What do the survivors pass on?',
     preset: Preset.temperate,
     config: Preset.temperate.config.copyWith(seed: 4),
     usesMeteor: true,
-    watch: 'Use the Meteor tool to strike the crowds, then watch the population rebuild.',
+    watch: 'Fire UV pulses into the crowds, then watch the survivors refill the drop. Look at which colours are left.',
     explanation:
-        'Meteors do not care about traits: they remove organisms by chance. The survivors are a random sample, '
-        'so the rebuilt population can drift away from where it was and usually carries less variety. This '
-        'founder effect is why small, isolated populations often look different from their ancestors.',
+        'UV light does not care about traits: it kills whoever happens to be in the beam. The survivors are a '
+        'random sample, so the rebuilt population can drift away from where it was, carries less variety, and '
+        'often belongs to just a few families. This founder effect is why small, isolated populations look '
+        'different from their ancestors.',
     evaluate: (world, memory) {
       final population = world.organisms.length.toDouble();
       final peak = memory['peak'] ?? population;
@@ -139,7 +140,7 @@ final lessons = <Lesson>[
         return LessonProgress(lost / 0.6 * 0.5, 'Wipe out 60% of the population (${(lost * 100).round()}% so far)');
       }
       final recovered = (population / peak).clamp(0, 1).toDouble();
-      return LessonProgress(0.5 + recovered * 0.5, 'Recovering: ${population.round()} of ${peak.round()} organisms');
+      return LessonProgress(0.5 + recovered * 0.5, 'Recovering: ${population.round()} of ${peak.round()} microbes');
     },
   ),
 ];

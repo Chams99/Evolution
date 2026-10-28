@@ -65,8 +65,8 @@ void main() {
       expect(find.text('RIGHT NOW'), findsOneWidget);
       await openTab(tester, 'LEARN');
       expect(find.text('Survival of the fastest'), findsOneWidget);
-      await openTab(tester, 'ORGANISM');
-      expect(find.textContaining('Tap an organism'), findsOneWidget);
+      await openTab(tester, 'SPECIMEN');
+      expect(find.textContaining('Tap a microbe'), findsOneWidget);
       await openTab(tester, 'SETUP');
       expect(find.text('PRESETS'), findsOneWidget);
     });
@@ -90,10 +90,10 @@ void main() {
   testWidgets('choosing a preset restarts the run', (tester) async {
     final controller = await pumpLab(tester, const Size(1440, 900));
     await openTab(tester, 'SETUP');
-    await tester.tap(find.text('Drought'));
+    await tester.tap(find.text('Drying puddle'));
     await frames(tester, 2);
     expect(controller.preset, Preset.drought);
-    expect(find.text('DROUGHT · SEED 1'), findsOneWidget);
+    expect(find.text('DRYING PUDDLE · SEED 1'), findsOneWidget);
   });
 
   testWidgets('the hand tool drops food on empty ground and selects organisms', (tester) async {
@@ -111,13 +111,13 @@ void main() {
     await tester.tapAt(fieldPoint(tester, controller, target.x, target.y));
     await tester.pump();
     expect(controller.selected, same(target));
-    expect(find.text('ORGANISM #${target.id}'), findsOneWidget);
+    expect(find.text('SPECIMEN #${target.id}'), findsOneWidget);
   });
 
   testWidgets('the meteor tool strikes where you tap', (tester) async {
     final controller = await pumpLab(tester, const Size(1440, 900));
     await tester.tap(find.text('Pause'));
-    await tester.tap(find.text('Meteor'));
+    await tester.tap(find.text('UV pulse'));
     await tester.pump();
     expect(controller.tool, Tool.meteor);
     final target = controller.world.organisms.firstWhere((o) => o.x > 200 && o.x < 560 && o.y > 120 && o.y < 420);
@@ -125,16 +125,16 @@ void main() {
     await tester.pump();
     expect(target.alive, isFalse);
     expect(controller.world.totalStruck, greaterThan(0));
-    expect(find.textContaining('Meteor strike'), findsOneWidget);
+    expect(find.textContaining('UV pulse:'), findsOneWidget);
   });
 
   testWidgets('famine and food rain change the food on the ground', (tester) async {
     final controller = await pumpLab(tester, const Size(1440, 900));
     await tester.tap(find.text('Pause'));
-    await tester.tap(find.text('Food rain'));
+    await tester.tap(find.text('Add algae'));
     await tester.pump();
     final rained = controller.world.food.length;
-    await tester.tap(find.text('Famine'));
+    await tester.tap(find.text('Drain algae'));
     await tester.pump();
     expect(controller.world.food.length, lessThan(rained));
   });
@@ -154,7 +154,7 @@ void main() {
   testWidgets('the intro shows on a first visit and can start the first lesson', (tester) async {
     final store = MemoryProgressStore();
     final controller = await pumpLab(tester, const Size(1440, 900), store: store);
-    expect(find.text('Meet the organisms'), findsOneWidget);
+    expect(find.text('A drop of pond water'), findsOneWidget);
     await tester.tap(find.text('Next'));
     await frames(tester, 3);
     await tester.tap(find.text('Next'));
@@ -162,7 +162,7 @@ void main() {
     await tester.tap(find.text('Start the first lesson'));
     await frames(tester, 3);
     expect(store.seen, isTrue);
-    expect(find.text('Meet the organisms'), findsNothing);
+    expect(find.text('A drop of pond water'), findsNothing);
     expect(controller.lesson?.lesson, lessons.first);
   });
 
@@ -170,7 +170,7 @@ void main() {
     final store = MemoryProgressStore(seen: true);
     final controller = await pumpLab(tester, const Size(1440, 900), store: store);
     expect(find.text('FIELD GUIDE'), findsOneWidget);
-    expect(find.textContaining('The ring is its energy'), findsOneWidget);
+    expect(find.textContaining('It swells and fills'), findsOneWidget);
     await tester.tap(find.bySemanticsLabel('Close the field guide'));
     await tester.pump();
     expect(find.text('FIELD GUIDE'), findsNothing);
@@ -182,7 +182,7 @@ void main() {
 
   testWidgets('the caption explains the field, then reports births and deaths', (tester) async {
     final controller = await pumpLab(tester, const Size(1440, 900));
-    expect(find.textContaining('When the ring closes, it splits in two'), findsOneWidget);
+    expect(find.textContaining('then divides in two'), findsOneWidget);
     controller.world.step(30 * 40);
     controller.stepSecond();
     await tester.pump();

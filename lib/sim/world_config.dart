@@ -112,28 +112,40 @@ class WorldConfig {
   }
 }
 
-/// Starting points that push selection in clearly different directions.
+/// Starting points that push selection in clearly different directions. Each
+/// one is framed as a sample of water under the microscope.
 enum Preset {
-  temperate('Temperate', 'Steady food and mild seasons. Speed and sense creep up slowly.', WorldConfig()),
+  temperate(
+    'Pond',
+    'POND WATER',
+    'A drop from a healthy pond. Steady algae and a gentle light cycle. Speed and sense creep up slowly.',
+    WorldConfig(),
+  ),
   drought(
-    'Drought',
-    'Scarce food and harsh dry spells. Numbers crash each season and speed stays low.',
+    'Drying puddle',
+    'DRYING PUDDLE',
+    'Scarce algae and long dim spells. Numbers crash every cycle, and running costs too much to get faster.',
     WorldConfig(foodPerSecond: 3.5, seasonStrength: 0.85, seasonLength: 60),
   ),
   bloom(
-    'Bloom',
-    'Plenty of food. The largest crowds, and speed rises fastest.',
+    'Algae bloom',
+    'NUTRIENT-RICH POND',
+    'Algae everywhere. The largest crowds, and speed rises fastest as everyone races for the next cell.',
     WorldConfig(foodPerSecond: 14, foodEnergy: 45, seasonStrength: 0.2),
   ),
   hunters(
-    'Hunters',
-    'Predation on. Size, speed and sense escalate together.',
+    'Predators',
+    'POND WITH PREDATORS',
+    'Big microbes can engulf smaller ones. Size, speed and eyesight escalate together.',
     WorldConfig(foodPerSecond: 6, initialPopulation: 40, mutationStrength: 0.1, predation: true),
   );
 
-  const Preset(this.label, this.summary, this.config);
+  const Preset(this.label, this.sample, this.summary, this.config);
 
   final String label;
+
+  /// Label of the sample on the microscope overlay.
+  final String sample;
   final String summary;
   final WorldConfig config;
 }

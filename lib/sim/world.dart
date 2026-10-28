@@ -178,6 +178,16 @@ class World {
     return false;
   }
 
+  /// Living organisms per family (founder id), largest first.
+  Map<int, int> get familySizes {
+    final counts = <int, int>{};
+    for (final o in organisms) {
+      counts[o.family] = (counts[o.family] ?? 0) + 1;
+    }
+    final sorted = counts.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+    return {for (final e in sorted) e.key: e.value};
+  }
+
   /// Living organisms descended from [ancestorId].
   int livingDescendants(int ancestorId) => organisms.where((o) => descendsFrom(o, ancestorId)).length;
 
@@ -366,7 +376,15 @@ class World {
   void _die(Organism organism, DeathCause cause) {
     organism.deathCause = cause;
     _event(
-      WorldEvent(kind: EventKind.death, tick: tick, x: organism.x, y: organism.y, size: organism.radius, cause: cause),
+      WorldEvent(
+        kind: EventKind.death,
+        tick: tick,
+        x: organism.x,
+        y: organism.y,
+        size: organism.radius,
+        cause: cause,
+        family: organism.family,
+      ),
     );
   }
 
@@ -432,9 +450,21 @@ class World {
       heading: angle,
       generation: parent.generation + 1,
       parentId: parent.id,
+      family: parent.family,
     );
     _parentOf[child.id] = parent.id;
-    _event(WorldEvent(kind: EventKind.birth, tick: tick, x: child.x, y: child.y, size: child.radius));
+    _event(
+      WorldEvent(
+        kind: EventKind.birth,
+        tick: tick,
+        x: child.x,
+        y: child.y,
+        size: child.radius,
+        fromX: parent.x,
+        fromY: parent.y,
+        family: parent.family,
+      ),
+    );
     return child;
   }
 
@@ -461,6 +491,7 @@ class World {
         struck: _struck,
         maxGeneration: maxGeneration,
         foodSupply: foodSupply,
+        families: familySizes,
       ),
     );
     if (history.length > historyLimit) history.removeAt(0);

@@ -116,7 +116,109 @@ class _Pill extends StatelessWidget {
   }
 }
 
-/// Current season and food supply, shown only when seasons are on.
+/// Camera-style overlay on the live view: recording light, sample label,
+/// magnification and a scale bar in micrometres.
+class MicroscopeHud extends StatelessWidget {
+  const MicroscopeHud({super.key, required this.controller, required this.label});
+
+  final LabController controller;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    const chip = BoxDecoration(color: Color(0xB3141218), borderRadius: BorderRadius.all(Radius.circular(4)));
+    final style = Styles.label.copyWith(fontSize: 10, color: Palette.cream);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final scale = constraints.maxWidth / controller.config.width;
+        final bar = 50 * scale;
+        return Stack(
+          children: [
+            Positioned(
+              left: 10,
+              top: 10,
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
+                decoration: chip,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _RecDot(playing: controller.playing),
+                    const SizedBox(width: 6),
+                    Text(controller.playing ? 'LIVE' : 'PAUSED', style: style),
+                    Text('  ·  $label', style: style.copyWith(color: Palette.muted)),
+                  ],
+                ),
+              ),
+            ),
+            Positioned(
+              right: 12,
+              bottom: 10,
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(8, 5, 8, 5),
+                decoration: chip,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text('×400', style: style.copyWith(color: Palette.muted)),
+                    const SizedBox(width: 10),
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(width: bar, height: 2, color: Palette.cream),
+                        const SizedBox(height: 3),
+                        Text('50 µm', style: style),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _RecDot extends StatefulWidget {
+  const _RecDot({required this.playing});
+
+  final bool playing;
+
+  @override
+  State<_RecDot> createState() => _RecDotState();
+}
+
+class _RecDotState extends State<_RecDot> with SingleTickerProviderStateMixin {
+  late final AnimationController _pulse = AnimationController(vsync: this, duration: const Duration(seconds: 1))
+    ..repeat(reverse: true);
+
+  @override
+  void dispose() {
+    _pulse.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: widget.playing ? Tween(begin: 0.35, end: 1.0).animate(_pulse) : const AlwaysStoppedAnimation(1),
+      child: Container(
+        width: 7,
+        height: 7,
+        decoration: BoxDecoration(
+          color: widget.playing ? const Color(0xFFE0483A) : Palette.faint,
+          shape: BoxShape.circle,
+        ),
+      ),
+    );
+  }
+}
+
+/// The lamp over the slide. Its brightness cycles like seasons and drives how
+/// fast algae grow. Shown only when the cycle is on.
 class SeasonBadge extends StatelessWidget {
   const SeasonBadge({super.key, required this.controller});
 
@@ -130,22 +232,25 @@ class SeasonBadge extends StatelessWidget {
       builder: (context, _, _) {
         final supply = controller.world.foodSupply;
         final (label, color) = supply < 0.75
-            ? ('DRY SEASON', Palette.terracotta)
+            ? ('LAMP DIM · ALGAE SCARCE', Palette.terracotta)
             : supply > 1.25
-            ? ('WET SEASON', Palette.food)
-            : ('MILD SEASON', Palette.gold);
+            ? ('LAMP BRIGHT · ALGAE BLOOMING', Palette.food)
+            : ('LAMP STEADY', Palette.gold);
         return Container(
           padding: const EdgeInsets.fromLTRB(10, 6, 10, 7),
-          decoration: BoxDecoration(
-            color: Palette.ink.withValues(alpha: 0.75),
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: Palette.line),
-          ),
+          decoration: BoxDecoration(color: const Color(0xB3141218), borderRadius: BorderRadius.circular(4)),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(label, style: Styles.label.copyWith(fontSize: 10, color: color)),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.light_mode_outlined, size: 12, color: color),
+                  const SizedBox(width: 5),
+                  Text(label, style: Styles.label.copyWith(fontSize: 10, color: color)),
+                ],
+              ),
               const SizedBox(height: 5),
               SizedBox(
                 width: 86,
@@ -188,34 +293,34 @@ class ToolDock extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           _ToolButton(
-            icon: Icons.touch_app_outlined,
-            label: 'Inspect & feed',
-            hint: 'Tap an organism to follow it, or empty ground to drop food (1)',
+            icon: Icons.colorize_outlined,
+            label: 'Inspect & pipette',
+            hint: 'Tap a microbe to follow it, or empty water to pipette in algae (1)',
             selected: controller.tool == Tool.hand,
             compact: compact,
             onTap: () => controller.setTool(Tool.hand),
           ),
           _ToolButton(
             icon: Icons.flare,
-            label: 'Meteor',
-            hint: 'Tap to wipe out everything in a circle (2)',
+            label: 'UV pulse',
+            hint: 'Tap to sterilise a circle of the drop with ultraviolet light (2)',
             selected: controller.tool == Tool.meteor,
             compact: compact,
-            accent: Palette.terracotta,
+            accent: const Color(0xFF8E7BFF),
             onTap: extinct ? null : () => controller.setTool(Tool.meteor),
           ),
           Container(width: 1, height: 22, margin: const EdgeInsets.symmetric(horizontal: 4), color: Palette.line),
           _ToolButton(
-            icon: Icons.grass,
-            label: 'Famine',
-            hint: 'Destroy most of the food on the ground',
+            icon: Icons.water_drop_outlined,
+            label: 'Drain algae',
+            hint: 'Filter most of the algae out of the drop',
             compact: compact,
             onTap: extinct ? null : controller.famine,
           ),
           _ToolButton(
             icon: Icons.grain,
-            label: 'Food rain',
-            hint: 'Scatter fresh food across the field',
+            label: 'Add algae',
+            hint: 'Add a fresh culture of algae across the drop',
             compact: compact,
             onTap: extinct ? null : controller.foodRain,
           ),
@@ -223,7 +328,7 @@ class ToolDock extends StatelessWidget {
           _ToolButton(
             icon: Icons.menu_book_outlined,
             label: 'Guide',
-            hint: controller.showGuide ? 'Hide the field guide' : 'What do the shapes and colours mean?',
+            hint: controller.showGuide ? 'Hide the field guide' : 'What am I looking at?',
             selected: controller.showGuide,
             compact: compact,
             onTap: controller.toggleGuide,

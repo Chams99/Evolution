@@ -44,6 +44,7 @@ class Sample {
     this.struck = 0,
     required this.maxGeneration,
     required this.foodSupply,
+    this.families = const {},
   });
 
   /// Simulated seconds since the start of the run.
@@ -65,6 +66,9 @@ class Sample {
 
   /// Seasonal food multiplier at this moment.
   final double foodSupply;
+
+  /// Living organisms per family (founder id).
+  final Map<int, int> families;
 }
 
 /// Run history as CSV, one row per sample.

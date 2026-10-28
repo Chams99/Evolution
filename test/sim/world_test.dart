@@ -196,5 +196,19 @@ void main() {
     expect(world.descendsFrom(grandchild, founder.id), isTrue);
     expect(world.descendsFrom(founder, grandchild.id), isFalse);
     expect(world.events.where((e) => e.kind == EventKind.birth), hasLength(7));
+    expect(world.organisms.map((o) => o.family).toSet(), {founder.id});
+    final birth = world.events.firstWhere((e) => e.kind == EventKind.birth);
+    expect(birth.fromX, isNotNull);
+    expect(birth.family, founder.id);
+  });
+
+  test('family sizes add up to the population and shrink to a few winners', () {
+    final world = World(const WorldConfig(seed: 6))..step(30 * 400);
+    final families = world.familySizes;
+    expect(families.values.fold<int>(0, (a, b) => a + b), world.organisms.length);
+    expect(families.length, lessThan(world.config.initialPopulation));
+    expect(world.history.last.families, families);
+    final sizes = families.values.toList();
+    expect(sizes, [...sizes]..sort((a, b) => b.compareTo(a)));
   });
 }

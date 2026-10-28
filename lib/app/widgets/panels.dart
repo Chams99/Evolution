@@ -5,6 +5,7 @@ import '../../sim/genome.dart';
 import '../../sim/organism.dart';
 import '../../sim/world_config.dart';
 import '../lab_controller.dart';
+import '../microbes.dart';
 import '../theme.dart';
 import 'charts.dart';
 
@@ -73,9 +74,9 @@ class Readouts extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             item('TIME', formatClock(world.seconds)),
-            item('POPULATION', '${world.organisms.length}'),
+            item('MICROBES', '${world.organisms.length}'),
             item('GENERATION', '${world.maxGeneration}'),
-            item('FOOD SUPPLY', '${(world.foodSupply * 100).round()}%', Palette.gold),
+            item('LIGHT', '${(world.foodSupply * 100).round()}%', Palette.gold),
           ],
         );
       },
@@ -268,18 +269,37 @@ class ChartsPanel extends StatelessWidget {
               ),
             ),
             Section(
+              title: 'Families',
+              trailing: Text(
+                '${latest.families.length} alive',
+                style: Styles.label.copyWith(color: Palette.faint, fontWeight: FontWeight.w400),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  FamiliesChart(samples: history),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Each band is one founder\'s family, in the colour of its cells. When a band widens, that '
+                    'family is out-dividing the rest. Most families vanish; a few take over.',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+            ),
+            Section(
               title: 'Population',
-              trailing: const _Key(items: [('organisms', Palette.cream), ('food', Palette.food)]),
+              trailing: const _Key(items: [('microbes', Palette.cream), ('algae', Palette.food)]),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   PopulationChart(samples: history),
                   const SizedBox(height: 8),
                   Text(
-                    'Last second: ${latest.births} born, ${latest.starved} starved, '
-                    '${latest.diedOfAge} died of age${world.config.predation ? ', ${latest.eaten} eaten' : ''}'
-                    '${latest.struck > 0 ? ', ${latest.struck} hit by meteors' : ''}. '
-                    'Shading shows the seasonal food supply.',
+                    'Last second: ${latest.births} divided, ${latest.starved} starved, '
+                    '${latest.diedOfAge} died of age${world.config.predation ? ', ${latest.eaten} engulfed' : ''}'
+                    '${latest.struck > 0 ? ', ${latest.struck} killed by UV' : ''}. '
+                    'Shading shows the lamp\'s light cycle.',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],
@@ -288,7 +308,7 @@ class ChartsPanel extends StatelessWidget {
             Section(
               title: 'Population map',
               trailing: Text(
-                'opacity = sense',
+                'colour = family · opacity = sense',
                 style: Styles.label.copyWith(color: Palette.faint, fontWeight: FontWeight.w400),
               ),
               child: ValueListenableBuilder(
@@ -439,10 +459,10 @@ class InspectorPanel extends StatelessWidget {
         final o = controller.selected;
         if (o == null) {
           return Section(
-            title: 'Organism',
+            title: 'Specimen',
             child: Text(
-              'Tap an organism to follow it: its energy, its genome and its whole family. Tap empty ground to '
-              'drop a patch of food.',
+              'Tap a microbe to follow it: its species, its energy, its genome and its whole family. Tap empty '
+              'water to pipette in some algae.',
               style: Theme.of(context).textTheme.bodySmall,
             ),
           );
@@ -455,12 +475,13 @@ class InspectorPanel extends StatelessWidget {
           null => 'Alive',
           DeathCause.starvation => 'Starved',
           DeathCause.oldAge => 'Died of old age',
-          DeathCause.predation => 'Eaten',
-          DeathCause.disaster => 'Killed by a meteor',
+          DeathCause.predation => 'Engulfed by a predator',
+          DeathCause.disaster => 'Killed by UV',
         };
         final family = world.livingDescendants(o.id);
+        final name = speciesName(o.family, o.genome);
         return Section(
-          title: 'Organism #${o.id}',
+          title: 'Specimen #${o.id}',
           trailing: InkWell(
             onTap: controller.clearSelection,
             child: Text('CLOSE', style: Styles.label.copyWith(color: Palette.faint)),
@@ -468,6 +489,31 @@ class InspectorPanel extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              Row(
+                children: [
+                  Container(
+                    width: 10,
+                    height: 10,
+                    decoration: BoxDecoration(color: familyColor(o.family), shape: BoxShape.circle),
+                  ),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Tooltip(
+                      message: explainName(name),
+                      child: Text(
+                        name,
+                        style: const TextStyle(
+                          fontFamily: Styles.display,
+                          fontSize: 17,
+                          fontStyle: FontStyle.italic,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
               Text(
                 '$status · generation ${o.generation}${o.parentId == null ? ' (founder)' : ' · parent #${o.parentId}'}',
                 style: TextStyle(fontSize: 13, color: o.alive ? Palette.cream : Palette.terracotta),
@@ -476,7 +522,7 @@ class InspectorPanel extends StatelessWidget {
               _Meter(
                 label: 'Energy',
                 value: o.energy / threshold,
-                detail: '${o.energy.round()} / ${threshold.round()} to split',
+                detail: '${o.energy.round()} / ${threshold.round()} to divide',
                 color: Palette.food,
               ),
               _Meter(
@@ -495,7 +541,7 @@ class InspectorPanel extends StatelessWidget {
                 ),
               const SizedBox(height: 6),
               Text(
-                '${o.meals} meals · ${o.offspring} offspring${config.predation ? ' · ${o.kills} kills' : ''}',
+                '${o.meals} algae eaten · ${o.offspring} divisions${config.predation ? ' · ${o.kills} engulfed' : ''}',
                 style: Styles.readout.copyWith(fontSize: 12, color: Palette.muted),
               ),
               const SizedBox(height: 10),
@@ -505,9 +551,9 @@ class InspectorPanel extends StatelessWidget {
                 child: Text(
                   family == 0
                       ? (o.alive
-                            ? 'No living descendants yet. It needs ${threshold.round()} energy to split.'
+                            ? 'No living descendants yet. It needs ${threshold.round()} energy to divide.'
                             : 'This line has ended: none of its descendants are alive.')
-                      : '$family living descendant${family == 1 ? '' : 's'}, ringed on the field. '
+                      : '$family living descendant${family == 1 ? '' : 's'}, circled in the drop. '
                             '${o.alive ? 'Its traits are spreading.' : 'Its line lives on after it.'}',
                   style: const TextStyle(fontSize: 12.5, height: 1.4, color: Palette.muted),
                 ),
@@ -677,7 +723,7 @@ class _SetupPanelState extends State<SetupPanel> {
                 onChanged: (v) => setState(() => _draft = _draft.copyWith(initialPopulation: v.round())),
               ),
               _SliderRow(
-                label: 'Food / s',
+                label: 'Algae / s',
                 value: _draft.foodPerSecond,
                 min: 0,
                 max: 25,
@@ -686,7 +732,7 @@ class _SetupPanelState extends State<SetupPanel> {
                 onChanged: (v) => setState(() => _draft = _draft.copyWith(foodPerSecond: v)),
               ),
               _SliderRow(
-                label: 'Food energy',
+                label: 'Algae energy',
                 value: _draft.foodEnergy,
                 min: 15,
                 max: 120,
@@ -695,7 +741,7 @@ class _SetupPanelState extends State<SetupPanel> {
                 onChanged: (v) => setState(() => _draft = _draft.copyWith(foodEnergy: v)),
               ),
               _SliderRow(
-                label: 'Seasons',
+                label: 'Light cycle',
                 value: _draft.seasonStrength,
                 min: 0,
                 max: 1,

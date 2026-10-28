@@ -6,6 +6,7 @@ import '../sim/sample.dart';
 import '../sim/world.dart';
 import '../sim/world_config.dart';
 import 'lessons.dart';
+import 'microbes.dart';
 import 'progress_store.dart';
 
 /// What a tap on the field does.
@@ -115,6 +116,7 @@ class LabController extends ChangeNotifier {
   // Milestone trackers.
   int _generationMark = 0;
   int _populationMark = 0;
+  int _familyMark = 0;
   int _kills = 0;
   bool _selectedDeathReported = false;
   final Map<Trait, int> _traitMarks = {};
@@ -163,6 +165,13 @@ class LabController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// What the microscope overlay calls the current sample.
+  String get sampleLabel {
+    final lesson = _lesson;
+    if (lesson != null) return lesson.lesson.preset?.sample ?? 'CLONED CULTURE';
+    return _preset?.sample ?? 'CUSTOM SAMPLE';
+  }
+
   /// Whether the field guide (what each shape and colour means) is open.
   bool get showGuide => _showGuide;
 
@@ -177,8 +186,8 @@ class LabController extends ChangeNotifier {
     final world = _world;
     if (world.extinct) return insight;
     if (world.seconds < 25 && world.totalBirths < 5) {
-      return 'Each glowing body is an organism looking for green food. The ring around it fills as it eats. '
-          'When the ring closes, it splits in two and the child inherits its traits, with small changes.';
+      return 'A live drop of pond water at 400×. Each coloured cell is a microbe hunting green algae. It swells as '
+          'it eats, grows a second nucleus, then divides in two. The daughters inherit its traits, slightly changed.';
     }
     final recent = world.history.length > 10 ? world.history.sublist(world.history.length - 10) : world.history;
     var born = 0, died = 0;
@@ -186,7 +195,7 @@ class LabController extends ChangeNotifier {
       born += s.births;
       died += s.starved + s.diedOfAge + s.eaten + s.struck;
     }
-    return '$born born and $died died in the last 10 seconds. $insight';
+    return '$born divided and $died died in the last 10 seconds. $insight';
   }
 
   void reopenIntro() {
@@ -244,7 +253,7 @@ class LabController extends ChangeNotifier {
       case Tool.meteor:
         final killed = _world.strike(x, y);
         _milestone(
-          killed == 0 ? 'Meteor hit empty ground' : 'Meteor strike: $killed organism${killed == 1 ? '' : 's'} lost',
+          killed == 0 ? 'UV pulse hit empty water' : 'UV pulse: $killed microbe${killed == 1 ? '' : 's'} killed',
           killed == 0 ? MilestoneTone.neutral : MilestoneTone.bad,
         );
         _refreshLesson();
@@ -264,14 +273,14 @@ class LabController extends ChangeNotifier {
 
   void famine() {
     final removed = _world.famine();
-    _milestone('Famine: $removed food items destroyed', MilestoneTone.bad);
+    _milestone('Algae drained: $removed cells filtered out', MilestoneTone.bad);
     _changed();
     notifyListeners();
   }
 
   void foodRain() {
     _world.foodRain();
-    _milestone('Food rain across the whole field', MilestoneTone.good);
+    _milestone('Fresh algae added to the drop', MilestoneTone.good);
     _changed();
     notifyListeners();
   }
@@ -342,8 +351,8 @@ class LabController extends ChangeNotifier {
 
   /// One plain sentence about what selection is doing right now.
   String get insight {
-    if (_world.extinct) return 'The population is extinct. Every lineage ended.';
-    if (_world.organisms.length < 6) return 'Too few organisms left to say what is being selected.';
+    if (_world.extinct) return 'The drop is sterile. Every family has died out.';
+    if (_world.organisms.length < 6) return 'Too few microbes left to say what is being selected.';
     Trait? strongest;
     var strength = 0.0;
     for (final trait in Trait.values) {
@@ -356,23 +365,23 @@ class LabController extends ChangeNotifier {
     final supply = _world.foodSupply;
     if (strongest == null || strength < 0.2) {
       if (supply < 0.6) {
-        return 'Dry season. Food is scarce, and the organisms with the least stored energy are starving.';
+        return 'The lamp is dim. Algae are scarce, and the microbes with the least stored energy are starving.';
       }
       if (supply > 1.4) {
-        return 'Wet season. Food is plentiful, so almost everyone reproduces and selection is weak.';
+        return 'The lamp is bright. Algae are everywhere, so almost every microbe divides and selection is weak.';
       }
-      return 'No trait is clearly favoured right now. Changes are mostly down to chance.';
+      return 'No trait is clearly favoured right now. Which families win is mostly down to luck.';
     }
     final favoured = (_selection[strongest] ?? 0) > 0;
     final who = switch ((strongest, favoured)) {
-      (Trait.size, true) => 'Larger organisms',
-      (Trait.size, false) => 'Smaller organisms',
-      (Trait.speed, true) => 'Faster organisms',
-      (Trait.speed, false) => 'Slower, thriftier organisms',
-      (Trait.sense, true) => 'Organisms that sense further',
-      (Trait.sense, false) => 'Organisms with shorter, cheaper senses',
+      (Trait.size, true) => 'Larger microbes',
+      (Trait.size, false) => 'Smaller microbes',
+      (Trait.speed, true) => 'Faster swimmers',
+      (Trait.speed, false) => 'Slower, thriftier swimmers',
+      (Trait.sense, true) => 'Microbes with bigger eyespots',
+      (Trait.sense, false) => 'Microbes with smaller, cheaper eyespots',
     };
-    return '$who are leaving the most offspring right now, so their traits are spreading.';
+    return '$who are dividing most often right now, so their traits are spreading.';
   }
 
   void _changed() {
@@ -402,6 +411,7 @@ class LabController extends ChangeNotifier {
   void _resetTrackers() {
     _generationMark = _world.maxGeneration;
     _populationMark = _world.organisms.length;
+    _familyMark = _world.familySizes.length;
     _kills = _world.totalKills;
     _traitMarks.clear();
     for (final trait in Trait.values) {
@@ -425,9 +435,22 @@ class LabController extends ChangeNotifier {
 
     const populations = [50, 100, 200, 300, 400];
     for (final p in populations) {
-      if (now.population >= p && _populationMark < p) _milestone('Population passed $p', MilestoneTone.good);
+      if (now.population >= p && _populationMark < p) _milestone('$p microbes in the drop', MilestoneTone.good);
     }
     _populationMark = now.population;
+
+    final families = now.families.length;
+    for (final f in const [5, 3, 2, 1]) {
+      if (families <= f && _familyMark > f && families > 0) {
+        if (f == 1) {
+          _milestone('One family has taken over the drop: ${genusOf(now.families.keys.first)}', MilestoneTone.neutral);
+        } else {
+          _milestone('Only $families families left', MilestoneTone.neutral);
+        }
+        break;
+      }
+    }
+    _familyMark = families;
 
     if (history.length > 30) {
       final window = history.sublist(history.length - 31);
@@ -435,12 +458,12 @@ class LabController extends ChangeNotifier {
       final crashedRecently = milestones.any((m) => m.text.startsWith('Population crashed') && now.time - m.time < 40);
       if (peak >= 20 && now.population <= peak * 0.5 && !crashedRecently) {
         final drop = ((1 - now.population / peak) * 100).round();
-        final context = now.foodSupply < 0.8 ? ' in the dry season' : '';
+        final context = now.foodSupply < 0.8 ? ' while the lamp was dim' : '';
         _milestone('Population crashed $drop%$context', MilestoneTone.bad);
       }
     }
 
-    if (world.totalKills > 0 && _kills == 0) _milestone('First predator kill', MilestoneTone.bad);
+    if (world.totalKills > 0 && _kills == 0) _milestone('First microbe engulfed by a predator', MilestoneTone.bad);
     _kills = world.totalKills;
 
     final start = history.first;
@@ -470,17 +493,18 @@ class LabController extends ChangeNotifier {
       final how = switch (pick.deathCause!) {
         DeathCause.starvation => 'starved',
         DeathCause.oldAge => 'died of old age',
-        DeathCause.predation => 'was eaten',
-        DeathCause.disaster => 'was killed by a meteor',
+        DeathCause.predation => 'was engulfed',
+        DeathCause.disaster => 'was killed by UV',
       };
       final family = world.livingDescendants(pick.id);
       _milestone(
-        '#${pick.id} $how${family > 0 ? ', leaving $family living descendant${family == 1 ? '' : 's'}' : ''}',
+        '${speciesName(pick.family, pick.genome)} #${pick.id} $how'
+        '${family > 0 ? ', leaving $family living descendant${family == 1 ? '' : 's'}' : ''}',
         MilestoneTone.neutral,
       );
     }
 
-    if (world.extinct) _milestone('Extinct after ${now.time.round()} seconds', MilestoneTone.bad);
+    if (world.extinct) _milestone('The drop is sterile after ${now.time.round()} seconds', MilestoneTone.bad);
   }
 
   void _refreshLesson() {

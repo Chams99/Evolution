@@ -96,31 +96,42 @@ class _IntroOverlayState extends State<IntroOverlay> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Meet the organisms', style: theme.titleLarge),
+            Text('A drop of pond water', style: theme.titleLarge),
             const SizedBox(height: 8),
             Text(
-              'Each one carries three inherited traits. Every trait helps it survive and every trait costs energy. '
-              'When an organism has stored enough energy it splits in two, and its child inherits the traits '
-              'with small random changes.',
+              'You are looking down a microscope at a living drop. Each coloured cell is a microbe. It hunts '
+              'algae, swells as it eats, and divides in two. Its daughters inherit three traits, each with a '
+              'tiny random change. Every trait helps, and every trait costs energy.',
               style: theme.bodyMedium,
             ),
             const SizedBox(height: 16),
-            const _TraitLine(Trait.size, 'Size', 'Eats whole meals and, with predators on, smaller organisms.'),
-            const _TraitLine(Trait.speed, 'Speed', 'Reaches food first. Costs grow with the square of speed.'),
-            const _TraitLine(Trait.sense, 'Sense', 'Spots food and danger from further away.'),
+            const _TraitLine(
+              Trait.size,
+              'Size',
+              'A bigger cell digests whole algae and, with predators on, engulfs others.',
+            ),
+            const _TraitLine(
+              Trait.speed,
+              'Speed',
+              'A longer, faster tail reaches algae first, but swimming burns energy.',
+            ),
+            const _TraitLine(Trait.sense, 'Sense', 'A bigger red eyespot spots algae and danger from further away.'),
           ],
         );
       case 1:
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Play with the world', style: theme.titleLarge),
+            Text('You run the lab', style: theme.titleLarge),
             const SizedBox(height: 8),
-            Text('Nothing is scripted. You set the conditions, and the population adapts.', style: theme.bodyMedium),
+            Text(
+              'Nothing is scripted. You set the conditions, and the microbes adapt or die out.',
+              style: theme.bodyMedium,
+            ),
             const SizedBox(height: 16),
-            const _ToolLine(Icons.touch_app_outlined, 'Tap an organism', 'to follow it and see its whole family.'),
-            const _ToolLine(Icons.grain, 'Tap empty ground', 'to drop food, or rain food over the whole field.'),
-            const _ToolLine(Icons.flare, 'Meteor and famine', 'cause disasters, then watch who recovers.'),
+            const _ToolLine(Icons.colorize_outlined, 'Tap a microbe', 'to see its species and follow its family.'),
+            const _ToolLine(Icons.grain, 'Tap empty water', 'to pipette in algae, or add a whole culture.'),
+            const _ToolLine(Icons.flare, 'UV pulse and drain', 'cause disasters, then watch who recovers.'),
             const _ToolLine(Icons.fast_forward, 'Speed up to 16×', 'to watch hundreds of generations go by.'),
           ],
         );
@@ -131,14 +142,15 @@ class _IntroOverlayState extends State<IntroOverlay> {
             Text('Learn by experiment', style: theme.titleLarge),
             const SizedBox(height: 8),
             Text(
-              'The Learn tab has ${lessons.length} short experiments, from why speed rises to what a catastrophe '
-              'does to a population. Each one tells you what to watch and explains what happened once you see it.',
+              'The Learn tab has ${lessons.length} short experiments, from why microbes get faster to what a '
+              'disaster does to a population. Each one tells you what to watch and explains what happened once you '
+              'have seen it.',
               style: theme.bodyMedium,
             ),
             const SizedBox(height: 12),
             Text(
-              'The trait panel also marks which traits are being selected for right now, based on which organisms '
-              'are actually leaving offspring.',
+              'Under the drop, the trait cards show which traits are being favoured right now, based on which '
+              'microbes are actually dividing. Every microbe also gets a Latin name from its traits.',
               style: theme.bodySmall,
             ),
           ],

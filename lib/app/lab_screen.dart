@@ -270,7 +270,7 @@ class _TabsHeader extends SliverPersistentHeaderDelegate {
         tabs: [
           Tab(text: 'LEARN'),
           Tab(text: 'CHARTS'),
-          Tab(text: 'ORGANISM'),
+          Tab(text: 'SPECIMEN'),
           Tab(text: 'SETUP'),
         ],
       ),
@@ -314,7 +314,7 @@ class _Title extends StatelessWidget {
         ),
         if (!compact)
           Text(
-            'Organisms inherit size, speed and sense, pay for them in energy, and adapt.',
+            'A live drop of pond water. Microbes eat, divide, mutate, and slowly become something new.',
             style: Theme.of(context).textTheme.bodySmall,
           ),
       ],
@@ -334,9 +334,14 @@ class _Field extends StatelessWidget {
     return Stack(
       children: [
         FieldView(controller: controller),
+        Positioned.fill(
+          child: IgnorePointer(
+            child: MicroscopeHud(controller: controller, label: controller.sampleLabel),
+          ),
+        ),
         Positioned(
           left: 12,
-          top: 12,
+          top: compact ? 40 : 44,
           right: 120,
           child: MilestoneFeed(controller: controller, compact: compact),
         ),
@@ -357,10 +362,10 @@ class _Field extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('EXTINCT', style: Styles.label.copyWith(color: Palette.terracotta)),
+                    Text('STERILE', style: Styles.label.copyWith(color: Palette.terracotta)),
                     const SizedBox(height: 6),
                     Text(
-                      'The last organism died at ${formatClock(world.seconds)}, after ${world.totalBirths} births.',
+                      'The last microbe died at ${formatClock(world.seconds)}, after ${world.totalBirths} divisions.',
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),

@@ -6,7 +6,7 @@ import '../../sim/genome.dart';
 import '../../sim/organism.dart';
 import '../../sim/sample.dart';
 import '../theme.dart';
-import 'field_view.dart';
+import '../microbes.dart';
 
 /// At most this many points are drawn per series; longer runs are thinned.
 const _maxPoints = 360;
@@ -148,6 +148,98 @@ class _TraitPainter extends CustomPainter {
   bool shouldRepaint(_TraitPainter old) => true;
 }
 
+/// Share of the population held by each family over the run, stacked. When
+/// one colour widens until it fills the band, that family has taken over.
+class FamiliesChart extends StatelessWidget {
+  const FamiliesChart({super.key, required this.samples, this.height = 120});
+
+  final List<Sample> samples;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: height,
+      child: CustomPaint(painter: _FamiliesPainter(samples), size: Size.infinite),
+    );
+  }
+}
+
+class _FamiliesPainter extends CustomPainter {
+  _FamiliesPainter(this.samples);
+
+  final List<Sample> samples;
+
+  static const _tracked = 10;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final plot = _Plot(size, left: 0, bottomPad: 14);
+    final live = [
+      for (final s in samples)
+        if (s.population > 0) s,
+    ];
+    if (live.length < 2) {
+      plot.drawFrame(canvas, lines: 1);
+      return;
+    }
+    final idx = _thinnedIndices(live.length);
+
+    // Track the families that ever held the largest shares; group the rest.
+    final peak = <int, double>{};
+    for (final i in idx) {
+      final s = live[i];
+      s.families.forEach((family, count) {
+        final share = count / s.population;
+        if (share > (peak[family] ?? 0)) peak[family] = share;
+      });
+    }
+    final tracked =
+        (peak.entries.toList()..sort((a, b) => b.value.compareTo(a.value))).take(_tracked).map((e) => e.key).toList()
+          ..sort();
+
+    final layers = <List<double>>[];
+    for (final i in idx) {
+      final s = live[i];
+      var cumulative = 0.0;
+      final column = <double>[];
+      for (final family in tracked) {
+        cumulative += (s.families[family] ?? 0) / s.population;
+        column.add(cumulative);
+      }
+      column.add(1);
+      layers.add(column);
+    }
+
+    for (var k = tracked.length; k >= 0; k--) {
+      final path = Path();
+      for (var j = 0; j < idx.length; j++) {
+        final p = Offset(plot.x(j, idx.length), plot.y(layers[j][k], 1));
+        j == 0 ? path.moveTo(p.dx, p.dy) : path.lineTo(p.dx, p.dy);
+      }
+      for (var j = idx.length - 1; j >= 0; j--) {
+        final lower = k == 0 ? 0.0 : layers[j][k - 1];
+        path.lineTo(plot.x(j, idx.length), plot.y(lower, 1));
+      }
+      path.close();
+      final color = k == tracked.length ? Palette.raised : familyColor(tracked[k]);
+      canvas.drawPath(path, Paint()..color = color.withValues(alpha: 0.9));
+    }
+    _text(canvas, '0:00', Offset(plot.left, plot.bottom + 2), Palette.faint);
+    _text(
+      canvas,
+      formatClock(live.last.time),
+      Offset(plot.right - 60, plot.bottom + 2),
+      Palette.faint,
+      alignRight: true,
+      width: 60,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_FamiliesPainter old) => true;
+}
+
 /// Every living organism placed by speed (x) and size (y), shaded by sense.
 class TraitScatter extends StatelessWidget {
   const TraitScatter({super.key, required this.organisms, required this.limits, this.selected, this.height = 170});
@@ -183,11 +275,8 @@ class _ScatterPainter extends CustomPainter {
         plot.x(limits.speed.normalize(o.genome.speed), 1, fraction: true),
         plot.y(limits.size.normalize(o.genome.size), 1),
       );
-      dot.color = organismColor(
-        o.genome,
-        limits,
-      ).withValues(alpha: 0.35 + 0.6 * limits.sense.normalize(o.genome.sense));
-      canvas.drawCircle(p, 2.6, dot);
+      dot.color = familyColor(o.family).withValues(alpha: 0.45 + 0.55 * limits.sense.normalize(o.genome.sense));
+      canvas.drawCircle(p, 2.8, dot);
     }
     final pick = selected;
     if (pick != null && pick.alive) {

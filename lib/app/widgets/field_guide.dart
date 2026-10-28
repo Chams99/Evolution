@@ -1,41 +1,43 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 
 import '../../sim/organism.dart';
 import '../lab_controller.dart';
+import '../microbes.dart';
 import '../theme.dart';
 import 'field_view.dart';
 
-/// What every shape and colour on the field means, drawn with the same
-/// painters as the field itself.
+/// What everything in the drop means, drawn with the same painters as the
+/// live view, on a card the colour of the slide.
 class FieldGuide extends StatelessWidget {
   const FieldGuide({super.key, required this.controller, this.overlay = true});
 
   final LabController controller;
 
-  /// Floating card on the field (wide screens) or a plain block (phones).
+  /// Floating card on the view (wide screens) or a plain block (phones).
   final bool overlay;
 
   @override
   Widget build(BuildContext context) {
     final predation = controller.config.predation;
     final rows = <(_Glyph, String)>[
-      (_Glyph.organism, 'An organism. The ring is its energy: when it closes, it splits in two.'),
-      (_Glyph.speed, 'Colour and wake show speed: terracotta is slow, gold with a long wake is fast.'),
-      (_Glyph.size, 'A bigger body means a larger size trait.'),
-      (_Glyph.food, 'Food. Eating it fills the ring.'),
-      (_Glyph.birth, 'A birth.'),
-      (_Glyph.starved, 'Starved: ran out of energy.'),
-      if (predation) (_Glyph.eaten, 'Eaten by a larger organism.'),
+      (_Glyph.cell, 'A microbe. It swells and fills with granules as it feeds.'),
+      (_Glyph.dividing, 'Two nuclei: it is about to divide in two.'),
+      (_Glyph.flagellum, 'Its tail (flagellum) shows speed. Longer, faster whipping means quicker.'),
+      (_Glyph.eyespot, 'The red eyespot shows sense. Bigger spot, sees further.'),
+      (_Glyph.families, 'Colour is family. Each founder has its own, passed on to every descendant.'),
+      (_Glyph.algae, 'Algae: food. Grows faster when the lamp is bright.'),
+      (_Glyph.starved, 'A grey, shrivelled ghost: it starved.'),
+      if (predation) (_Glyph.eaten, 'A burst: eaten by a larger microbe.'),
     ];
+    const text = Color(0xFF2A262C);
     return Container(
-      width: overlay ? 262 : null,
+      width: overlay ? 276 : null,
       padding: const EdgeInsets.fromLTRB(12, 10, 10, 6),
       decoration: BoxDecoration(
-        color: overlay ? Palette.ink.withValues(alpha: 0.9) : Palette.surface,
+        color: const Color(0xF2F4F3EA),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Palette.lineStrong),
+        border: Border.all(color: const Color(0x33000000)),
+        boxShadow: overlay ? const [BoxShadow(color: Color(0x33000000), blurRadius: 12, offset: Offset(0, 4))] : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -43,7 +45,7 @@ class FieldGuide extends StatelessWidget {
         children: [
           Row(
             children: [
-              Text('FIELD GUIDE', style: Styles.label.copyWith(color: Palette.gold)),
+              Text('FIELD GUIDE', style: Styles.label.copyWith(color: const Color(0xFF8A5BB0))),
               const Spacer(),
               Semantics(
                 button: true,
@@ -53,22 +55,22 @@ class FieldGuide extends StatelessWidget {
                   borderRadius: BorderRadius.circular(4),
                   child: const Padding(
                     padding: EdgeInsets.all(2),
-                    child: Icon(Icons.close, size: 16, color: Palette.faint),
+                    child: Icon(Icons.close, size: 16, color: Color(0xFF6A6570)),
                   ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 6),
-          for (final (glyph, text) in rows)
+          for (final (glyph, line) in rows)
             Padding(
               padding: const EdgeInsets.only(bottom: 6),
               child: Row(
                 children: [
-                  SizedBox(width: 40, height: 26, child: CustomPaint(painter: _GlyphPainter(glyph))),
+                  SizedBox(width: 44, height: 28, child: CustomPaint(painter: _GlyphPainter(glyph))),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: Text(text, style: const TextStyle(fontSize: 12, height: 1.3, color: Palette.cream)),
+                    child: Text(line, style: const TextStyle(fontSize: 12, height: 1.3, color: text)),
                   ),
                 ],
               ),
@@ -79,7 +81,7 @@ class FieldGuide extends StatelessWidget {
   }
 }
 
-enum _Glyph { organism, speed, size, food, birth, starved, eaten }
+enum _Glyph { cell, dividing, flagellum, eyespot, families, algae, starved, eaten }
 
 class _GlyphPainter extends CustomPainter {
   const _GlyphPainter(this.glyph);
@@ -88,70 +90,44 @@ class _GlyphPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final c = size.center(Offset.zero);
+    final c = size.center(Offset.zero) + const Offset(4, 0);
+    final violet = familyColor(0);
+    void cell(Offset at, double r, {Color? color, double speed = 1, double sense = 40, double energy = 0.5}) =>
+        paintMicrobe(
+          canvas,
+          at,
+          r,
+          color: color ?? violet,
+          heading: 0,
+          speed: speed,
+          sense: sense,
+          energyShare: energy,
+          phase: 1.3,
+          seed: 3,
+        );
     switch (glyph) {
-      case _Glyph.organism:
-        paintOrganism(
-          canvas,
-          c + const Offset(4, 0),
-          6,
-          color: Palette.terracotta,
-          heading: 0,
-          speed: 1,
-          energyShare: 0.65,
-        );
-      case _Glyph.speed:
-        paintOrganism(
-          canvas,
-          Offset(9, c.dy - 5),
-          4,
-          color: Palette.terracotta,
-          heading: 0,
-          speed: 0.4,
-          energyShare: 0,
-          showEnergy: false,
-        );
-        paintOrganism(
-          canvas,
-          Offset(size.width - 5, c.dy + 6),
-          4,
-          color: Palette.gold,
-          heading: 0,
-          speed: 3,
-          energyShare: 0,
-          showEnergy: false,
-        );
-      case _Glyph.size:
-        paintOrganism(
-          canvas,
-          Offset(8, c.dy),
-          3.5,
-          color: Palette.terracotta,
-          heading: -math.pi / 2,
-          speed: 1,
-          energyShare: 0,
-          showEnergy: false,
-        );
-        paintOrganism(
-          canvas,
-          Offset(size.width - 12, c.dy),
-          8,
-          color: Palette.terracotta,
-          heading: -math.pi / 2,
-          speed: 1,
-          energyShare: 0,
-          showEnergy: false,
-        );
-      case _Glyph.food:
-        paintFood(canvas, c + const Offset(-8, 2), 2.6);
-        paintFood(canvas, c + const Offset(4, -5), 2.6);
-        paintFood(canvas, c + const Offset(10, 6), 2.6);
-      case _Glyph.birth:
-        paintBirth(canvas, c, 5, 0.35);
+      case _Glyph.cell:
+        cell(c, 7, energy: 0.6);
+      case _Glyph.dividing:
+        cell(c, 8, energy: 1);
+      case _Glyph.flagellum:
+        cell(Offset(c.dx + 8, c.dy - 6), 3.6, speed: 0.4);
+        cell(Offset(c.dx + 8, c.dy + 7), 3.6, speed: 3);
+      case _Glyph.eyespot:
+        cell(Offset(c.dx - 2, c.dy), 4.5, sense: 15);
+        cell(Offset(c.dx + 14, c.dy), 4.5, sense: 170);
+      case _Glyph.families:
+        cell(Offset(c.dx - 12, c.dy - 5), 3.6, color: familyColor(1));
+        cell(Offset(c.dx + 2, c.dy + 6), 3.6, color: familyColor(2));
+        cell(Offset(c.dx + 14, c.dy - 4), 3.6, color: familyColor(5));
+      case _Glyph.algae:
+        paintAlgae(canvas, c + const Offset(-10, 3), 3);
+        paintAlgae(canvas, c + const Offset(1, -5), 3.4);
+        paintAlgae(canvas, c + const Offset(10, 5), 2.8);
       case _Glyph.starved:
-        paintDeath(canvas, c, 5, DeathCause.starvation, 0.1);
+        paintGhost(canvas, c, 7, DeathCause.starvation, 0.2);
       case _Glyph.eaten:
-        paintDeath(canvas, c, 4, DeathCause.predation, 0.3);
+        paintGhost(canvas, c, 5, DeathCause.predation, 0.25, color: familyColor(4));
     }
   }
 
@@ -159,7 +135,7 @@ class _GlyphPainter extends CustomPainter {
   bool shouldRepaint(_GlyphPainter oldDelegate) => oldDelegate.glyph != glyph;
 }
 
-/// One line under the field saying what is happening right now.
+/// One line under the view saying what is happening right now.
 class FieldCaption extends StatelessWidget {
   const FieldCaption({super.key, required this.controller});
 
