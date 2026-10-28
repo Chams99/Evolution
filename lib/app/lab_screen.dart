@@ -12,6 +12,7 @@ import 'widgets/field_view.dart';
 import 'widgets/intro.dart';
 import 'widgets/learn.dart';
 import 'widgets/panels.dart';
+import 'widgets/setup_panel.dart';
 import 'widgets/trait_strip.dart';
 
 class LabScreen extends StatefulWidget {

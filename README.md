@@ -113,7 +113,11 @@ lib/
 test/
   sim/            Determinism, bounds, food, division, predation, light cycle, disasters, selection, families
   app/            Every lesson completes with its seed; names; layouts at phone, tablet and desktop sizes
-tool/balance.dart Headless runner used to tune the energy model
+tool/
+  balance.dart        Headless runner used to tune the energy model
+  render_sprites.py   Renders the microbe and algae figures at three sizes
+  render_social.py    Composes the link-preview card from a screenshot
+web/index.html    Branded loading screen, theme colour and link-preview tags
 ```
 
 The engine never imports Flutter, so the tests, the balance tool and the app all run exactly the same rules. The microscope view repaints from a `ValueNotifier` on every frame, and the charts redraw only when a new sample arrives, once per simulated second. Ten simulated minutes run headless in one to four seconds, depending on population size.

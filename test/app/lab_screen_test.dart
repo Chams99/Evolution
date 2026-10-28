@@ -49,7 +49,7 @@ void main() {
     await openTab(tester, 'CHARTS');
     expect(find.text('RIGHT NOW'), findsOneWidget);
     await openTab(tester, 'SETUP');
-    expect(find.text('PRESETS'), findsOneWidget);
+    expect(find.text('SAMPLE'), findsOneWidget);
     expect(controller.world.tick, greaterThan(0));
   });
 
@@ -68,7 +68,7 @@ void main() {
       await openTab(tester, 'SPECIMEN');
       expect(find.textContaining('Tap a microbe'), findsOneWidget);
       await openTab(tester, 'SETUP');
-      expect(find.text('PRESETS'), findsOneWidget);
+      expect(find.text('SAMPLE'), findsOneWidget);
     });
   }
 
@@ -164,6 +164,21 @@ void main() {
     expect(store.seen, isTrue);
     expect(find.text('A drop of pond water'), findsNothing);
     expect(controller.lesson?.lesson, lessons.first);
+  });
+
+  testWidgets('changing conditions shows what changed and restarts the sample on apply', (tester) async {
+    final controller = await pumpLab(tester, const Size(1440, 1400));
+    await openTab(tester, 'SETUP');
+    expect(find.text('Conditions match the running sample.'), findsOneWidget);
+    await tester.tap(find.byTooltip('Pick a random seed'));
+    await tester.pump();
+    expect(find.text('Changed: seed'), findsOneWidget);
+    final seed = int.parse(tester.widget<TextField>(find.byType(TextField)).controller!.text);
+    await tester.ensureVisible(find.text('Restart sample'));
+    await tester.tap(find.text('Restart sample'));
+    await frames(tester, 2);
+    expect(controller.config.seed, seed);
+    expect(find.text('Conditions match the running sample.'), findsOneWidget);
   });
 
   testWidgets('the field guide explains the symbols and can be closed for good', (tester) async {

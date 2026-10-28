@@ -1,38 +1,98 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
-
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
-
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
-  -->
+  <!-- Replaced by the value of `flutter build web --base-href`. -->
   <base href="$FLUTTER_BASE_HREF">
 
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="Natural selection sandbox: organisms inherit size, speed and sense, pay for them in energy, and adapt.">
+  <title>Evolution · a live drop of pond water</title>
+  <meta name="description" content="Watch natural selection happen under a microscope. Microbes hunt algae, divide, mutate and adapt to light, famine and predators. Five guided experiments included.">
+  <meta name="theme-color" content="#09080E">
+  <meta name="color-scheme" content="dark">
 
-  <!-- iOS meta tags & icons -->
+  <!-- Link previews -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Evolution · a live drop of pond water">
+  <meta property="og:description" content="Microbes hunt algae, divide, mutate and adapt. Watch natural selection happen live, then run your own experiments.">
+  <meta property="og:image" content="https://chams99.github.io/Evolution/social.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:url" content="https://chams99.github.io/Evolution/">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Evolution · a live drop of pond water">
+  <meta name="twitter:description" content="Watch natural selection happen under a microscope.">
+  <meta name="twitter:image" content="https://chams99.github.io/Evolution/social.png">
+  <meta name="author" content="Chames Eddine Dhibi">
+
+  <!-- iOS -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="Evolution">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
-
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" href="favicon.png"/>
-
-  <title>Evolution</title>
+  <link rel="icon" type="image/png" href="favicon.png">
   <link rel="manifest" href="manifest.json">
+
+  <style>
+    html, body { margin: 0; height: 100%; background: #09080E; }
+    #loading {
+      position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 22px; background: #09080E; color: #F5ECE0; transition: opacity 400ms ease;
+      font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    }
+    #loading.done { opacity: 0; pointer-events: none; }
+    .lens {
+      position: relative; width: 132px; height: 132px; border-radius: 50%;
+      background: radial-gradient(circle at 50% 50%, #F4F0E7 0%, #D9D0C1 62%, #6E6457 100%);
+      box-shadow: 0 0 0 1px rgba(245, 236, 224, 0.2), 0 0 0 10px #120F14, 0 0 0 11px rgba(245, 236, 224, 0.12);
+      overflow: hidden;
+    }
+    .cell {
+      position: absolute; width: 22px; height: 15px; border-radius: 50%;
+      border: 1.5px solid rgba(45, 36, 33, 0.7); background: rgba(167, 92, 122, 0.55);
+      animation: swim 2.4s ease-in-out infinite;
+    }
+    .cell::after {
+      content: ""; position: absolute; left: 6px; top: 4px; width: 6px; height: 6px; border-radius: 50%;
+      background: rgba(45, 36, 33, 0.55);
+    }
+    .cell.b { left: 64px; top: 40px; background: rgba(59, 125, 177, 0.55); animation-delay: -0.8s; }
+    .cell.a { left: 30px; top: 70px; }
+    .cell.c { left: 80px; top: 84px; background: rgba(165, 102, 50, 0.55); animation-delay: -1.6s; }
+    .alga { position: absolute; width: 6px; height: 6px; border-radius: 50%; background: #5E904D; }
+    @keyframes swim {
+      0%, 100% { transform: translate(0, 0) rotate(-8deg); }
+      50% { transform: translate(10px, -6px) rotate(10deg); }
+    }
+    .label { font-size: 11px; letter-spacing: 0.08em; color: #B8ADA4; text-transform: uppercase; }
+    .title { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 22px; font-weight: 600; letter-spacing: -0.02em; }
+    @media (prefers-reduced-motion: reduce) { .cell { animation: none; } }
+  </style>
 </head>
 <body>
+  <div id="loading" role="status" aria-live="polite">
+    <div class="lens" aria-hidden="true">
+      <span class="alga" style="left:22px;top:30px"></span>
+      <span class="alga" style="left:98px;top:58px"></span>
+      <span class="alga" style="left:52px;top:104px"></span>
+      <span class="cell a"></span><span class="cell b"></span><span class="cell c"></span>
+    </div>
+    <div class="title">Evolution</div>
+    <div class="label">Preparing the sample…</div>
+  </div>
+  <noscript>
+    <p style="color:#F5ECE0;font-family:system-ui;text-align:center;margin-top:40vh">
+      Evolution needs JavaScript to run the simulation.
+    </p>
+  </noscript>
+  <script>
+    window.addEventListener('flutter-first-frame', function () {
+      var el = document.getElementById('loading');
+      el.classList.add('done');
+      setTimeout(function () { el.remove(); }, 500);
+    });
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
