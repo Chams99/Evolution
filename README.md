@@ -4,17 +4,32 @@ A natural selection sandbox built with Flutter. A population of simple organisms
 
 **[Open the live demo](https://chams99.github.io/Evolution/)**. It runs in the browser, with no install.
 
-![Hunters preset after seven minutes: speed has more than doubled under predation pressure](docs/screenshot.png)
+![The Arms race lesson in progress: hunters with long wakes, a live goal, and the wet-season tint on the field](docs/screenshot.png)
 
-## What you can do
+## Learn by experiment
 
-- **Watch traits shift.** Each trait shows its mean and spread over the whole run. Population is plotted against food, with the seasonal supply shaded behind it, and a size-speed map shows every living organism.
-- **Follow one organism.** Tap it to see its energy, age, genome, offspring, kills and, eventually, how it died. Tap empty ground to drop a patch of food.
-- **Compare environments.** Four presets push selection in different directions (see below).
-- **Run experiments.** Change food rate, food energy, seasons, mutation strength, lifespan and predation, then restart. The same seed always replays the same run.
-- **Control time.** Play at 1× to 16×, or step one simulated second at a time. Keyboard: `Space` plays or pauses, `→` steps, `R` restarts.
-- **Take the data with you.** Copy the full history as CSV, with one row per simulated second.
-- **Share a run.** `?preset=hunters&seed=3&at=240` opens Hunters with seed 3, already four minutes in.
+The **Learn** tab has five guided experiments. Each one sets up a world, asks a question, tells you what to watch, tracks a live goal, and explains what happened once you have seen it:
+
+| # | Lesson | The question |
+| --- | --- | --- |
+| 1 | Survival of the fastest | Food goes to whoever reaches it first. What happens to speed? |
+| 2 | Boom and bust | Food comes and goes with the seasons. Does the population just follow it? |
+| 3 | Arms race | Large organisms can eat smaller ones. How do hunters and hunted respond? |
+| 4 | No variation, no evolution | Every organism is identical and children are exact copies. Can anything evolve? |
+| 5 | Bottleneck | A catastrophe wipes out most of the population at random. What do the survivors pass on? |
+
+While any run is going, the trait panel marks each trait as **▲ favoured**, **▼ selected against** or neutral. The mark is a standardised selection differential: how far the parents of the last 30 seconds of births sit from the population mean. A "Right now" line puts it into words, for example "Faster organisms are leaving the most offspring right now". Progress is saved, and a short tour runs on the first visit.
+
+## Play with it
+
+- **Inspect and feed.** Tap an organism to follow it: its energy, genome, offspring and kills, and its whole living family, ringed on the field. Tap empty ground to drop food.
+- **Cause disasters.** Strike with a **meteor**, trigger a **famine**, or make **food rain**, then watch who recovers.
+- **Watch the season.** The ground turns dry and warm when food is short and green when it is plentiful. Births ripple, deaths fade, and each body's wake grows with its speed.
+- **Catch milestones.** New generations, population crashes, trait records and the fate of the organism you are following pop up on the field.
+- **Compare environments.** Four presets push selection in different directions (see below), and every parameter can be tuned. The same seed always replays the same run.
+- **Control time.** Play at 1× to 16×, or step one simulated second at a time. Keyboard: `Space` plays or pauses, `→` steps, `R` restarts, `1` selects the inspect tool and `2` the meteor.
+- **Keep the data.** Copy the full history as CSV, with one row per simulated second.
+- **Share a run or a lesson.** `?preset=hunters&seed=3&at=240` opens Hunters with seed 3, four minutes in. `?lesson=bottleneck` opens a lesson directly.
 
 ## The model
 
@@ -58,12 +73,13 @@ lib/
     rng.dart          Seeded random source, so every run can be replayed
     sample.dart       Per-second statistics and CSV export
   app/            The interface
-    lab_controller.dart  Runs the world on a fixed timestep tied to the frame ticker
+    lab_controller.dart  Runs the world on a fixed timestep; tools, milestones, insight
+    lessons.dart         The five experiments and their goals
     lab_screen.dart      Side-by-side layout on wide screens, tabs on phones
-    widgets/             Field and chart painters, panels
+    widgets/             Field and chart painters, overlays, panels, lessons, tour
 test/
-  sim/            Determinism, bounds, food, births, predation, seasons, CSV
-  app/            Layouts at phone, tablet and desktop sizes; controls and taps
+  sim/            Determinism, bounds, food, births, predation, seasons, disasters, selection, lineage
+  app/            Every lesson completes with its seed; layouts at phone, tablet and desktop sizes
 tool/balance.dart Headless runner used to tune the energy model
 ```
 
