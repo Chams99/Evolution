@@ -2,25 +2,23 @@ import 'package:flutter/painting.dart';
 
 import '../sim/genome.dart';
 
-/// Stain colours for families, chosen to read on the bright slide and on the
-/// dark panels alike.
+/// Stain colours for families. All eight share one OKLCH lightness (0.57) and
+/// chroma (0.105), so no family looks louder than another, and the hues skip
+/// green, which belongs to algae.
 const _stains = <Color>[
-  Color(0xFF8A5BB0), // violet
-  Color(0xFFC0507E), // magenta
-  Color(0xFF2E8C83), // teal
-  Color(0xFFC7842A), // amber
-  Color(0xFFB65238), // rust
-  Color(0xFF4A62B0), // indigo
-  Color(0xFF8E3B4E), // burgundy
-  Color(0xFFCF6F86), // rose
-  Color(0xFF5A7180), // slate
-  Color(0xFF9A4E86), // plum
-  Color(0xFFB07A3A), // ochre
-  Color(0xFF3F7FA8), // cerulean
+  Color(0xFFA75C7A), // raspberry, hue 355
+  Color(0xFFAD5D54), // brick, hue 28
+  Color(0xFFA56632), // amber, hue 58
+  Color(0xFF967020), // ochre, hue 82
+  Color(0xFF1F8893), // teal, hue 205
+  Color(0xFF3B7DB1), // blue, hue 245
+  Color(0xFF6970B4), // indigo, hue 278
+  Color(0xFF91639F), // plum, hue 318
 ];
 
-/// The stain colour of a family. Every founder gets one and passes it on.
-Color familyColor(int family) => _stains[(family * 7 + 3) % _stains.length];
+/// The stain colour of a family. Every founder gets one and passes it on;
+/// neighbouring founders get hues far apart on the wheel.
+Color familyColor(int family) => _stains[(family * 3 + 1) % _stains.length];
 
 /// Made-up genus names, one per family.
 const _genera = [

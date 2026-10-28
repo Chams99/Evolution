@@ -2,7 +2,15 @@ import 'package:flutter/material.dart';
 
 import '../sim/genome.dart';
 
-/// Colours and type. Warm ink and cream, with one accent per trait.
+/// The colour system. Every colour in the app comes from here and has one job:
+///
+/// * Neutrals (ink, surface, cream, muted, faint) carry the interface.
+/// * [gold] is the only accent: buttons, selection, trait data.
+/// * [terracotta] is the only alert: deaths, crashes, the UV pulse.
+/// * [food] is the only green: algae, on the slide and in the charts.
+/// * Family stains (see microbes.dart) are data colours with equal lightness
+///   and chroma, and none of them is green.
+/// * [Slide] holds the microscope view, warm ivory to match the cream.
 abstract final class Palette {
   static const ink = Color(0xFF09080E);
   static const surface = Color(0xFF120F14);
@@ -14,15 +22,36 @@ abstract final class Palette {
   static const faint = Color(0xFF7A716B);
   static const gold = Color(0xFFC9A453);
   static const terracotta = Color(0xFFD37B59);
-  static const rust = Color(0xFFAA4838);
-  static const food = Color(0xFF8FB996);
-  static const steel = Color(0xFF86A8C8);
 
-  static Color trait(Trait trait) => switch (trait) {
-    Trait.size => terracotta,
-    Trait.speed => gold,
-    Trait.sense => steel,
+  /// Algae green, lifted slightly so it reads on the dark panels.
+  static const food = Color(0xFF79A866);
+
+  /// Overlay chips on the live view.
+  static const hud = Color(0xBF09080E);
+
+  /// Traits share the accent; they are told apart by icon and label.
+  static Color trait(Trait trait) => gold;
+
+  static IconData traitIcon(Trait trait) => switch (trait) {
+    Trait.size => Icons.open_in_full,
+    Trait.speed => Icons.speed,
+    Trait.sense => Icons.visibility_outlined,
   };
+}
+
+/// Colours of the slide under the lamp. Warm ivory, the same family as the
+/// interface's cream, so the live view and the panels belong together.
+abstract final class Slide {
+  static const bright = Color(0xFFF4F0E7);
+  static const brightEdge = Color(0xFFD9D0C1);
+  static const dim = Color(0xFFD4D0C8);
+  static const dimEdge = Color(0xFFABA397);
+  static const ink = Color(0xFF2D2421);
+  static const eyespot = Color(0xFFD25030);
+  static const algae = Color(0xFF5E904D);
+  static const algaeRim = Color(0xFF3B612D);
+  static const ghost = Color(0xFF8B867E);
+  static const debris = Color(0xFF6E6457);
 }
 
 abstract final class Styles {
@@ -57,7 +86,7 @@ ThemeData buildTheme() {
     onSurface: Palette.cream,
     outline: Palette.lineStrong,
     outlineVariant: Palette.line,
-    error: Palette.rust,
+    error: Palette.terracotta,
   );
 
   final base = ThemeData(useMaterial3: true, colorScheme: scheme, fontFamily: Styles.body);

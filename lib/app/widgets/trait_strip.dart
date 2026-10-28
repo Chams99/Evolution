@@ -68,11 +68,7 @@ class _TraitCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Container(
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-              ),
+              Icon(Palette.traitIcon(trait), size: 13, color: color),
               const SizedBox(width: 6),
               Text(trait.label, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
               const SizedBox(width: 6),
@@ -99,7 +95,7 @@ class _TraitCard extends StatelessWidget {
                   '${change >= 0 ? '+' : ''}${(change * 100).round()}%',
                   style: Styles.readout.copyWith(
                     fontSize: 11.5,
-                    color: change.abs() < 0.05 ? Palette.faint : (change > 0 ? Palette.food : Palette.terracotta),
+                    color: change.abs() < 0.05 ? Palette.faint : Palette.cream,
                   ),
                 ),
               ),

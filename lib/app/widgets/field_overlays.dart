@@ -86,7 +86,7 @@ class _Pill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = switch (milestone.tone) {
-      MilestoneTone.good => Palette.food,
+      MilestoneTone.good => Palette.cream,
       MilestoneTone.bad => Palette.terracotta,
       MilestoneTone.neutral => Palette.gold,
     };
@@ -126,7 +126,7 @@ class MicroscopeHud extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const chip = BoxDecoration(color: Color(0xB3141218), borderRadius: BorderRadius.all(Radius.circular(4)));
+    const chip = BoxDecoration(color: Palette.hud, borderRadius: BorderRadius.all(Radius.circular(4)));
     final style = Styles.label.copyWith(fontSize: 10, color: Palette.cream);
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -208,10 +208,7 @@ class _RecDotState extends State<_RecDot> with SingleTickerProviderStateMixin {
       child: Container(
         width: 7,
         height: 7,
-        decoration: BoxDecoration(
-          color: widget.playing ? const Color(0xFFE0483A) : Palette.faint,
-          shape: BoxShape.circle,
-        ),
+        decoration: BoxDecoration(color: widget.playing ? Palette.terracotta : Palette.faint, shape: BoxShape.circle),
       ),
     );
   }
@@ -238,7 +235,7 @@ class SeasonBadge extends StatelessWidget {
             : ('LAMP STEADY', Palette.gold);
         return Container(
           padding: const EdgeInsets.fromLTRB(10, 6, 10, 7),
-          decoration: BoxDecoration(color: const Color(0xB3141218), borderRadius: BorderRadius.circular(4)),
+          decoration: BoxDecoration(color: Palette.hud, borderRadius: BorderRadius.circular(4)),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             mainAxisSize: MainAxisSize.min,
@@ -306,7 +303,7 @@ class ToolDock extends StatelessWidget {
             hint: 'Tap to sterilise a circle of the drop with ultraviolet light (2)',
             selected: controller.tool == Tool.meteor,
             compact: compact,
-            accent: const Color(0xFF8E7BFF),
+            accent: Palette.terracotta,
             onTap: extinct ? null : () => controller.setTool(Tool.meteor),
           ),
           Container(width: 1, height: 22, margin: const EdgeInsets.symmetric(horizontal: 4), color: Palette.line),
@@ -339,7 +336,6 @@ class ToolDock extends StatelessWidget {
             hint: controller.showSense ? 'Hide sensing radii' : 'Draw every sensing radius',
             selected: controller.showSense,
             compact: compact,
-            accent: Palette.steel,
             onTap: controller.toggleSense,
           ),
         ],

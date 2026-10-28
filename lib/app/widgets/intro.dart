@@ -173,11 +173,9 @@ class _TraitLine extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            margin: const EdgeInsets.only(top: 5),
-            width: 9,
-            height: 9,
-            decoration: BoxDecoration(color: Palette.trait(trait), shape: BoxShape.circle),
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Icon(Palette.traitIcon(trait), size: 15, color: Palette.gold),
           ),
           const SizedBox(width: 10),
           Expanded(

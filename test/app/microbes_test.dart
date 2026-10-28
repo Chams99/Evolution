@@ -18,7 +18,7 @@ void main() {
     final b = speciesName(7, const Genome(size: 2, speed: 3, sense: 150)).split(' ').first;
     expect(a, b);
     expect(familyColor(7), familyColor(7));
-    expect({for (var f = 0; f < 12; f++) familyColor(f)}.length, 12);
+    expect({for (var f = 0; f < 8; f++) familyColor(f)}.length, 8);
   });
 
   test('every Latin word can be explained', () {

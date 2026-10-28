@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../sim/organism.dart';
 import '../lab_controller.dart';
 import '../microbes.dart';
+import '../sprites.dart';
 import '../theme.dart';
 
 /// Radius of the UV pulse tool, in world units (micrometres).
@@ -13,17 +14,86 @@ const double meteorRadius = 70;
 /// Microbes are drawn larger than their collision radius so their parts read.
 const double bodyScale = 1.7;
 
-/// Colours of the slide under the lamp.
-abstract final class Slide {
-  static const bright = Color(0xFFEEEFE2);
-  static const brightEdge = Color(0xFFC4C8B2);
-  static const dim = Color(0xFFC9CDC6);
-  static const dimEdge = Color(0xFF8E948F);
-  static const ink = Color(0xFF1E1B22);
-  static const eyespot = Color(0xFFC8372B);
-  static const algae = Color(0xFF5D9A47);
-  static const algaeRim = Color(0xFF3B6A2E);
-  static const ghost = Color(0xFF8B8A86);
+/// Draws a batch of microbes with the rendered figures: flagella first, then
+/// the tinted bodies, the overlay details and the eyespots.
+void paintMicrobeFigures(Canvas canvas, Sprites sprites, List<MicrobeDraw> cells, double phase) {
+  if (cells.isEmpty) return;
+  final flagellum = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeCap = StrokeCap.round;
+  for (final m in cells) {
+    final direction = Offset(math.cos(m.heading), math.sin(m.heading));
+    final side = Offset(-direction.dy, direction.dx);
+    final halfLength = m.radius * 1.25;
+    final base = m.center - direction * (halfLength * 0.96);
+    final length = m.radius * (1.0 + m.speed * 1.35);
+    final path = Path()..moveTo(base.dx, base.dy);
+    const segments = 14;
+    for (var i = 1; i <= segments; i++) {
+      final t = i / segments;
+      final wave = math.sin(t * 2.6 * math.pi - (phase + m.seed * 0.7) * (2 + m.speed)) * m.radius * 0.3 * t;
+      final p = base - direction * (length * t) + side * wave;
+      path.lineTo(p.dx, p.dy);
+    }
+    flagellum
+      ..strokeWidth = math.max(0.8, m.radius * 0.1)
+      ..color = Color.lerp(m.color, Slide.ink, 0.5)!.withValues(alpha: 0.7);
+    canvas.drawPath(path, flagellum);
+  }
+
+  final typical = cells.fold<double>(0, (sum, m) => sum + m.radius) / cells.length * 1.25;
+  final level = sprites.forCell(typical);
+  final transforms = <RSTransform>[];
+  final frames = <Rect>[];
+  final tints = <Color>[];
+  for (final m in cells) {
+    transforms.add(
+      RSTransform.fromComponents(
+        rotation: m.heading,
+        scale: m.radius * 1.25 / level.cellHalfLength,
+        anchorX: level.cellX,
+        anchorY: level.cellY,
+        translateX: m.center.dx,
+        translateY: m.center.dy,
+      ),
+    );
+    frames.add(level.cellFrame(Sprites.stateFor(m.energyShare)));
+    tints.add(Color.lerp(m.color, Colors.white, 0.18)!);
+  }
+  final paint = Paint()..filterQuality = FilterQuality.medium;
+  canvas.drawAtlas(level.cellTint, transforms, frames, tints, BlendMode.modulate, null, paint);
+  canvas.drawAtlas(level.cellOverlay, transforms, frames, null, null, null, paint);
+
+  final eye = Paint()..color = Slide.eyespot.withValues(alpha: 0.92);
+  for (final m in cells) {
+    final direction = Offset(math.cos(m.heading), math.sin(m.heading));
+    final side = Offset(-direction.dy, direction.dx);
+    final at = m.center + direction * (m.radius * 0.88) - side * (m.radius * 0.18);
+    canvas.drawCircle(at, math.max(0.9, m.radius * (0.1 + m.sense / 180 * 0.26)), eye);
+  }
+}
+
+/// What the view needs to draw one microbe.
+class MicrobeDraw {
+  const MicrobeDraw({
+    required this.center,
+    required this.radius,
+    required this.color,
+    required this.heading,
+    required this.speed,
+    required this.sense,
+    required this.energyShare,
+    required this.seed,
+  });
+
+  final Offset center;
+  final double radius;
+  final Color color;
+  final double heading;
+  final double speed;
+  final double sense;
+  final double energyShare;
+  final int seed;
 }
 
 /// The live view of the drop, scaled to fit while keeping its aspect ratio.
@@ -258,7 +328,8 @@ void paintGhost(Canvas canvas, Offset c, double r, DeathCause? cause, double t, 
 }
 
 class _FieldPainter extends CustomPainter {
-  _FieldPainter(this.controller, this.hover) : super(repaint: Listenable.merge([controller.frame, hover]));
+  _FieldPainter(this.controller, this.hover)
+    : super(repaint: Listenable.merge([controller.frame, hover, Sprites.current]));
 
   final LabController controller;
   final ValueNotifier<Offset?> hover;
@@ -292,9 +363,41 @@ class _FieldPainter extends CustomPainter {
     _paintDebris(canvas, size, now);
     _paintUvMarks(canvas, scale, now);
 
-    for (final item in world.food) {
-      final jitter = ((item.x * 13 + item.y * 7).floor() % 5) / 10;
-      paintAlgae(canvas, Offset(item.x * scale, item.y * scale), math.max(1.8, (2.4 + jitter) * scale));
+    final sprites = Sprites.current.value;
+    if (sprites != null) {
+      final level = sprites.forAlgae(math.max(2.2, 2.8 * scale));
+      final transforms = <RSTransform>[];
+      final frames = <Rect>[];
+      for (final item in world.food) {
+        final hash = (item.x * 13 + item.y * 7).floor();
+        final variant = hash % 7 == 0 ? 2 : (hash % 4 == 0 ? 1 : 0);
+        final radius = math.max(2.2, (2.6 + (hash % 5) / 10) * scale) * (variant == 0 ? 1 : 1.5);
+        transforms.add(
+          RSTransform.fromComponents(
+            rotation: (hash % 628) / 100,
+            scale: radius / level.algaeRadius,
+            anchorX: level.algaeCentre,
+            anchorY: level.algaeCentre,
+            translateX: item.x * scale,
+            translateY: item.y * scale,
+          ),
+        );
+        frames.add(level.algaeFrame(variant));
+      }
+      canvas.drawAtlas(
+        level.algae,
+        transforms,
+        frames,
+        null,
+        null,
+        null,
+        Paint()..filterQuality = FilterQuality.medium,
+      );
+    } else {
+      for (final item in world.food) {
+        final jitter = ((item.x * 13 + item.y * 7).floor() % 5) / 10;
+        paintAlgae(canvas, Offset(item.x * scale, item.y * scale), math.max(1.8, (2.4 + jitter) * scale));
+      }
     }
 
     _paintEvents(canvas, scale, now, beneath: true);
@@ -318,22 +421,41 @@ class _FieldPainter extends CustomPainter {
       ..strokeWidth = 1.4
       ..color = Slide.ink.withValues(alpha: 0.6);
 
-    for (final o in world.organisms) {
-      final c = Offset(o.x * scale, o.y * scale);
-      final r = math.max(3.2, o.radius * scale * bodyScale);
-      paintMicrobe(
-        canvas,
-        c,
-        r,
-        color: familyColor(o.family),
-        heading: o.heading,
-        speed: o.genome.speed,
-        sense: o.genome.sense,
-        energyShare: o.energy / world.reproductionThreshold(o.genome),
-        phase: phase + o.id * 0.7,
-        seed: o.id,
-      );
-      if (family.contains(o)) _dashedCircle(canvas, c, r * 1.5 + 4, familyRing);
+    final cells = [
+      for (final o in world.organisms)
+        MicrobeDraw(
+          center: Offset(o.x * scale, o.y * scale),
+          radius: math.max(3.2, o.radius * scale * bodyScale),
+          color: familyColor(o.family),
+          heading: o.heading,
+          speed: o.genome.speed,
+          sense: o.genome.sense,
+          energyShare: o.energy / world.reproductionThreshold(o.genome),
+          seed: o.id,
+        ),
+    ];
+    if (sprites != null) {
+      paintMicrobeFigures(canvas, sprites, cells, phase);
+    } else {
+      for (final m in cells) {
+        paintMicrobe(
+          canvas,
+          m.center,
+          m.radius,
+          color: m.color,
+          heading: m.heading,
+          speed: m.speed,
+          sense: m.sense,
+          energyShare: m.energyShare,
+          phase: phase + m.seed * 0.7,
+          seed: m.seed,
+        );
+      }
+    }
+    for (var i = 0; i < cells.length; i++) {
+      if (family.contains(world.organisms[i])) {
+        _dashedCircle(canvas, cells[i].center, cells[i].radius * 1.6 + 4, familyRing);
+      }
     }
 
     _paintEvents(canvas, scale, now, beneath: false);
@@ -364,13 +486,13 @@ class _FieldPainter extends CustomPainter {
     final aim = hover.value;
     if (controller.tool == Tool.meteor && aim != null) {
       final c = aim * scale;
-      canvas.drawCircle(c, meteorRadius * scale, Paint()..color = const Color(0xFF7B5CFF).withValues(alpha: 0.08));
+      canvas.drawCircle(c, meteorRadius * scale, Paint()..color = Palette.terracotta.withValues(alpha: 0.1));
       _dashedCircle(
         canvas,
         c,
         meteorRadius * scale,
         Paint()
-          ..color = const Color(0xFF5B3FD9).withValues(alpha: 0.8)
+          ..color = Palette.terracotta.withValues(alpha: 0.9)
           ..style = PaintingStyle.stroke
           ..strokeWidth = 1.4,
       );
@@ -407,7 +529,7 @@ class _FieldPainter extends CustomPainter {
       final driftY = (now * (0.02 + (i % 7) * 0.006)) % size.height;
       final p = Offset((baseX + driftX) % size.width, (baseY + driftY) % size.height);
       final r = 1.0 + (h % 9) * 0.7;
-      speck.color = const Color(0xFF6E6B5E).withValues(alpha: 0.05 + (h % 5) * 0.025);
+      speck.color = Slide.debris.withValues(alpha: 0.05 + (h % 5) * 0.025);
       if (i % 9 == 0) {
         final a = (h % 628) / 100;
         canvas.drawLine(
@@ -424,7 +546,7 @@ class _FieldPainter extends CustomPainter {
     }
   }
 
-  /// Faint violet patches where UV pulses landed.
+  /// Faint scorched patches where UV pulses landed.
   void _paintUvMarks(Canvas canvas, double scale, int now) {
     for (final e in controller.world.events) {
       if (e.kind != EventKind.strike) continue;
@@ -433,7 +555,7 @@ class _FieldPainter extends CustomPainter {
       canvas.drawCircle(
         Offset(e.x * scale, e.y * scale),
         e.size * scale,
-        Paint()..color = const Color(0xFF7B5CFF).withValues(alpha: 0.12 * (1 - age)),
+        Paint()..color = Palette.terracotta.withValues(alpha: 0.1 * (1 - age)),
       );
     }
   }
@@ -450,27 +572,52 @@ class _FieldPainter extends CustomPainter {
         case EventKind.death when beneath:
           final t = (now - e.tick) / _ghostTicks;
           if (t < 0 || t > 1) continue;
-          paintGhost(canvas, c, r, e.cause, t, color: familyColor(e.family ?? 0));
+          final sprites = Sprites.current.value;
+          if (sprites != null && e.cause != DeathCause.predation) {
+            _paintGhostFigure(canvas, sprites, c, r, t, shrivel: e.cause == DeathCause.starvation);
+          } else {
+            paintGhost(canvas, c, r, e.cause, t, color: familyColor(e.family ?? 0));
+          }
         case EventKind.strike when !beneath:
           final t = (now - e.tick) / 30;
           if (t < 0 || t > 1) continue;
-          canvas.drawCircle(
-            c,
-            e.size * scale,
-            Paint()..color = const Color(0xFFF1EDFF).withValues(alpha: 0.75 * (1 - t)),
-          );
+          canvas.drawCircle(c, e.size * scale, Paint()..color = Colors.white.withValues(alpha: 0.7 * (1 - t)));
           canvas.drawCircle(
             c,
             e.size * scale * (0.6 + 0.5 * Curves.easeOut.transform(t)),
             Paint()
               ..style = PaintingStyle.stroke
               ..strokeWidth = 3 * (1 - t) + 1
-              ..color = const Color(0xFF5B3FD9).withValues(alpha: 0.8 * (1 - t)),
+              ..color = Palette.terracotta.withValues(alpha: 0.85 * (1 - t)),
           );
         default:
           break;
       }
     }
+  }
+
+  /// A dead cell drawn with the ghost figure, fading and (if it starved) shrinking.
+  void _paintGhostFigure(Canvas canvas, Sprites sprites, Offset c, double r, double t, {required bool shrivel}) {
+    final level = sprites.forCell(r * 1.25);
+    final scale = r * 1.25 / level.cellHalfLength * (shrivel ? 1 - 0.3 * t : 1);
+    canvas.drawAtlas(
+      level.ghost,
+      [
+        RSTransform.fromComponents(
+          rotation: (c.dx + c.dy) / 50,
+          scale: scale,
+          anchorX: level.cellX,
+          anchorY: level.cellY,
+          translateX: c.dx,
+          translateY: c.dy,
+        ),
+      ],
+      [level.ghostFrame],
+      [Colors.white.withValues(alpha: 1 - t)],
+      BlendMode.modulate,
+      null,
+      Paint()..filterQuality = FilterQuality.medium,
+    );
   }
 
   void _dashedCircle(Canvas canvas, Offset center, double radius, Paint paint) {

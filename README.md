@@ -78,6 +78,22 @@ These results come from [`tool/balance.dart`](tool/balance.dart): 10 simulated m
 
 ![The Arms race lesson: large predatory microbes with big eyespots, and a live goal in the side panel](docs/lesson.png)
 
+## Design
+
+**One colour system**, defined in [`theme.dart`](lib/app/theme.dart), where every colour has a single job:
+
+| Role | Colour | Used for |
+| --- | --- | --- |
+| Neutrals | warm ink, cream, muted greys | the interface, and the slide, which is warm ivory so the live view matches the panels |
+| Accent | gold | buttons, selection and trait data, and nothing else |
+| Alert | terracotta | deaths, crashes and the UV pulse |
+| Life | one algae green | algae, on the slide and in the charts, and nothing else |
+| Data | eight family stains | equal OKLCH lightness (0.57) and chroma (0.105), hues spread around the wheel with green skipped, so no family looks louder than another and none can be mistaken for algae |
+
+Traits are told apart by icon and label rather than by competing colours.
+
+**Rendered figures.** The microbes and algae are illustrations rendered by [`tool/render_sprites.py`](tool/render_sprites.py): brightfield-style cells with a dark membrane and a refractive rim, granular cytoplasm, a nucleus with its nucleolus, a contractile vacuole and food vacuoles holding eaten algae. Each cell has three states (hungry, fed, dividing), and algae come as single *Chlorella*-like cells, pairs and four-cell colonies. Bodies are rendered in greyscale and tinted with the family stain on the GPU. They are drawn with `Canvas.drawAtlas` from full-, half- and quarter-size sheets, whichever is closest to the on-screen size, so hundreds of cells stay smooth and fast.
+
 ## How it is built
 
 ```

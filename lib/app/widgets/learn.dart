@@ -20,7 +20,7 @@ class LessonStrip extends StatelessWidget {
         final lesson = run.lesson;
         final number = lessons.indexOf(lesson) + 1;
         final done = run.completed;
-        final accent = done ? Palette.food : Palette.gold;
+        final accent = Palette.gold;
         final next = controller.nextLesson;
         return AnimatedContainer(
           duration: const Duration(milliseconds: 250),
@@ -127,7 +127,7 @@ class LessonList extends StatelessWidget {
         const SizedBox(height: 6),
         Text(
           '${done.length} of ${lessons.length} complete',
-          style: Styles.label.copyWith(color: done.length == lessons.length ? Palette.food : Palette.faint),
+          style: Styles.label.copyWith(color: done.length == lessons.length ? Palette.gold : Palette.faint),
         ),
         const SizedBox(height: 14),
         for (final (i, lesson) in lessons.indexed)
@@ -163,7 +163,7 @@ class _LessonCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final border = active ? Palette.gold : (done ? Palette.food.withValues(alpha: 0.4) : Palette.line);
+    final border = active ? Palette.gold : (done ? Palette.gold.withValues(alpha: 0.4) : Palette.line);
     return Material(
       color: Palette.surface,
       borderRadius: BorderRadius.circular(8),
@@ -185,8 +185,8 @@ class _LessonCard extends StatelessWidget {
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: done ? Palette.food : Colors.transparent,
-                  border: Border.all(color: done ? Palette.food : Palette.lineStrong),
+                  color: done ? Palette.gold : Colors.transparent,
+                  border: Border.all(color: done ? Palette.gold : Palette.lineStrong),
                 ),
                 child: done
                     ? const Icon(Icons.check, size: 15, color: Palette.surface)

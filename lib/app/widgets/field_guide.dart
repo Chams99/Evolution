@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../sim/organism.dart';
 import '../lab_controller.dart';
 import '../microbes.dart';
+import '../sprites.dart';
 import '../theme.dart';
 import 'field_view.dart';
 
@@ -29,15 +30,15 @@ class FieldGuide extends StatelessWidget {
       (_Glyph.starved, 'A grey, shrivelled ghost: it starved.'),
       if (predation) (_Glyph.eaten, 'A burst: eaten by a larger microbe.'),
     ];
-    const text = Color(0xFF2A262C);
+    const text = Slide.ink;
     return Container(
       width: overlay ? 276 : null,
       padding: const EdgeInsets.fromLTRB(12, 10, 10, 6),
       decoration: BoxDecoration(
-        color: const Color(0xF2F4F3EA),
+        color: Slide.bright.withValues(alpha: 0.96),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0x33000000)),
-        boxShadow: overlay ? const [BoxShadow(color: Color(0x33000000), blurRadius: 12, offset: Offset(0, 4))] : null,
+        border: Border.all(color: Slide.ink.withValues(alpha: 0.2)),
+        boxShadow: overlay ? const [BoxShadow(color: Color(0x40000000), blurRadius: 14, offset: Offset(0, 4))] : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -45,7 +46,7 @@ class FieldGuide extends StatelessWidget {
         children: [
           Row(
             children: [
-              Text('FIELD GUIDE', style: Styles.label.copyWith(color: const Color(0xFF8A5BB0))),
+              Text('FIELD GUIDE', style: Styles.label.copyWith(color: Slide.ink)),
               const Spacer(),
               Semantics(
                 button: true,
@@ -55,7 +56,7 @@ class FieldGuide extends StatelessWidget {
                   borderRadius: BorderRadius.circular(4),
                   child: const Padding(
                     padding: EdgeInsets.all(2),
-                    child: Icon(Icons.close, size: 16, color: Color(0xFF6A6570)),
+                    child: Icon(Icons.close, size: 16, color: Slide.ghost),
                   ),
                 ),
               ),
@@ -84,20 +85,35 @@ class FieldGuide extends StatelessWidget {
 enum _Glyph { cell, dividing, flagellum, eyespot, families, algae, starved, eaten }
 
 class _GlyphPainter extends CustomPainter {
-  const _GlyphPainter(this.glyph);
+  _GlyphPainter(this.glyph) : super(repaint: Sprites.current);
 
   final _Glyph glyph;
 
   @override
   void paint(Canvas canvas, Size size) {
     final c = size.center(Offset.zero) + const Offset(4, 0);
-    final violet = familyColor(0);
-    void cell(Offset at, double r, {Color? color, double speed = 1, double sense = 40, double energy = 0.5}) =>
+    final sprites = Sprites.current.value;
+    final stain = familyColor(0);
+    void cell(Offset at, double r, {Color? color, double speed = 1, double sense = 40, double energy = 0.5}) {
+      if (sprites != null) {
+        paintMicrobeFigures(canvas, sprites, [
+          MicrobeDraw(
+            center: at,
+            radius: r,
+            color: color ?? stain,
+            heading: 0,
+            speed: speed,
+            sense: sense,
+            energyShare: energy,
+            seed: 3,
+          ),
+        ], 1.3);
+      } else {
         paintMicrobe(
           canvas,
           at,
           r,
-          color: color ?? violet,
+          color: color ?? stain,
           heading: 0,
           speed: speed,
           sense: sense,
@@ -105,6 +121,24 @@ class _GlyphPainter extends CustomPainter {
           phase: 1.3,
           seed: 3,
         );
+      }
+    }
+
+    void algae(Offset at, double r, int variant) {
+      if (sprites == null) return paintAlgae(canvas, at, r);
+      final level = sprites.forAlgae(r);
+      canvas.drawImageRect(
+        level.algae,
+        level.algaeFrame(variant),
+        Rect.fromCenter(
+          center: at,
+          width: r / Sprites.algaeRadius * Sprites.algaeFrame,
+          height: r / Sprites.algaeRadius * Sprites.algaeFrame,
+        ),
+        Paint()..filterQuality = FilterQuality.medium,
+      );
+    }
+
     switch (glyph) {
       case _Glyph.cell:
         cell(c, 7, energy: 0.6);
@@ -121,9 +155,9 @@ class _GlyphPainter extends CustomPainter {
         cell(Offset(c.dx + 2, c.dy + 6), 3.6, color: familyColor(2));
         cell(Offset(c.dx + 14, c.dy - 4), 3.6, color: familyColor(5));
       case _Glyph.algae:
-        paintAlgae(canvas, c + const Offset(-10, 3), 3);
-        paintAlgae(canvas, c + const Offset(1, -5), 3.4);
-        paintAlgae(canvas, c + const Offset(10, 5), 2.8);
+        algae(c + const Offset(-11, 3), 3.2, 0);
+        algae(c + const Offset(2, -4), 4.6, 1);
+        algae(c + const Offset(12, 5), 4.4, 2);
       case _Glyph.starved:
         paintGhost(canvas, c, 7, DeathCause.starvation, 0.2);
       case _Glyph.eaten:

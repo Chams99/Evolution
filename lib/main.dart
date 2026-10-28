@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 
 import 'app/lab_screen.dart';
+import 'app/sprites.dart';
 import 'app/theme.dart';
 
-void main() => runApp(const EvolutionApp());
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  Sprites.load();
+  runApp(const EvolutionApp());
+}
 
 class EvolutionApp extends StatelessWidget {
   const EvolutionApp({super.key});

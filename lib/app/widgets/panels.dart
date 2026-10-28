@@ -352,11 +352,7 @@ class _TraitRow extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(color: Palette.trait(trait), shape: BoxShape.circle),
-                    ),
+                    Icon(Palette.traitIcon(trait), size: 13, color: Palette.gold),
                     const SizedBox(width: 6),
                     Text(trait.label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                   ],
@@ -523,7 +519,7 @@ class InspectorPanel extends StatelessWidget {
                 label: 'Energy',
                 value: o.energy / threshold,
                 detail: '${o.energy.round()} / ${threshold.round()} to divide',
-                color: Palette.food,
+                color: Palette.gold,
               ),
               _Meter(
                 label: 'Age',
@@ -808,8 +804,8 @@ class _SetupPanelState extends State<SetupPanel> {
                 child: FilledButton(
                   onPressed: _dirty ? _apply : null,
                   style: FilledButton.styleFrom(
-                    backgroundColor: Palette.rust,
-                    foregroundColor: Palette.cream,
+                    backgroundColor: Palette.gold,
+                    foregroundColor: Palette.surface,
                     disabledBackgroundColor: Palette.raised,
                     disabledForegroundColor: Palette.faint,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
