@@ -280,10 +280,11 @@ class ToolDock extends StatelessWidget {
   Widget build(BuildContext context) {
     final extinct = controller.world.extinct;
     return Container(
-      padding: const EdgeInsets.all(4),
+      height: 42,
+      padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
-        color: Palette.ink.withValues(alpha: 0.86),
-        borderRadius: BorderRadius.circular(10),
+        color: Palette.surface,
+        borderRadius: BorderRadius.circular(6),
         border: Border.all(color: Palette.lineStrong),
       ),
       child: Row(
@@ -322,14 +323,6 @@ class ToolDock extends StatelessWidget {
             onTap: extinct ? null : controller.foodRain,
           ),
           Container(width: 1, height: 22, margin: const EdgeInsets.symmetric(horizontal: 4), color: Palette.line),
-          _ToolButton(
-            icon: Icons.menu_book_outlined,
-            label: 'Guide',
-            hint: controller.showGuide ? 'Hide the field guide' : 'What am I looking at?',
-            selected: controller.showGuide,
-            compact: compact,
-            onTap: controller.toggleGuide,
-          ),
           _ToolButton(
             icon: Icons.radar,
             label: 'Sense',

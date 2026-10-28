@@ -84,8 +84,12 @@ class _LabScreenState extends State<LabScreen> with SingleTickerProviderStateMix
   }
 
   Widget _wide(BuildContext context) {
+    final size = MediaQuery.sizeOf(context);
+    final gutter = size.width >= 1600 ? 32.0 : 22.0;
+    final panelWidth = (size.width * 0.27).clamp(320.0, 420.0);
+    final short = size.height < 820;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(28, 22, 28, 22),
+      padding: EdgeInsets.fromLTRB(gutter, short ? 14 : 20, gutter, short ? 12 : 18),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -96,26 +100,28 @@ class _LabScreenState extends State<LabScreen> with SingleTickerProviderStateMix
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Expanded(child: _Title(controller: _controller)),
+                    Expanded(
+                      child: _Title(controller: _controller, compact: short),
+                    ),
                     Readouts(controller: _controller),
                   ],
                 ),
-                const SizedBox(height: 14),
+                SizedBox(height: short ? 10 : 14),
                 Expanded(
                   child: Center(child: _Field(controller: _controller)),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
+                _ControlDeck(controller: _controller),
+                const SizedBox(height: 10),
                 FieldCaption(controller: _controller),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
                 TraitStrip(controller: _controller),
-                const SizedBox(height: 12),
-                TransportBar(controller: _controller),
               ],
             ),
           ),
-          const SizedBox(width: 28),
+          SizedBox(width: gutter),
           SizedBox(
-            width: 380,
+            width: panelWidth,
             child: DefaultTabController(
               length: 3,
               child: Column(
@@ -145,7 +151,11 @@ class _LabScreenState extends State<LabScreen> with SingleTickerProviderStateMix
                       children: [
                         ListView(
                           padding: const EdgeInsets.only(top: 18),
-                          children: [LessonList(controller: _controller)],
+                          children: [
+                            FieldGuide(controller: _controller, overlay: false),
+                            const SizedBox(height: 22),
+                            LessonList(controller: _controller),
+                          ],
                         ),
                         ListView(
                           padding: const EdgeInsets.only(top: 18),
@@ -194,20 +204,16 @@ class _LabScreenState extends State<LabScreen> with SingleTickerProviderStateMix
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: _Field(controller: _controller, compact: compact),
                 ),
-                if (compact)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                    child: Center(child: ToolDock(controller: _controller, compact: true)),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  child: Center(
+                    child: ToolDock(controller: _controller, compact: compact),
                   ),
+                ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
                   child: FieldCaption(controller: _controller),
                 ),
-                if (compact && _controller.showGuide)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-                    child: FieldGuide(controller: _controller, overlay: false),
-                  ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
                   child: FittedBox(
@@ -233,7 +239,11 @@ class _LabScreenState extends State<LabScreen> with SingleTickerProviderStateMix
           children: [
             ListView(
               padding: const EdgeInsets.all(16),
-              children: [LessonList(controller: _controller)],
+              children: [
+                FieldGuide(controller: _controller, overlay: false),
+                const SizedBox(height: 22),
+                LessonList(controller: _controller),
+              ],
             ),
             ListView(
               padding: const EdgeInsets.all(16),
@@ -347,8 +357,6 @@ class _Field extends StatelessWidget {
           child: MilestoneFeed(controller: controller, compact: compact),
         ),
         Positioned(right: 10, top: 10, child: SeasonBadge(controller: controller)),
-        if (!compact && controller.showGuide) Positioned(right: 10, top: 58, child: FieldGuide(controller: controller)),
-        if (!compact) Positioned(left: 10, bottom: 10, child: ToolDock(controller: controller)),
         if (world.extinct)
           Positioned.fill(
             child: Center(
@@ -392,6 +400,39 @@ class _Field extends StatelessWidget {
             ),
           ),
       ],
+    );
+  }
+}
+
+/// Playback on the left, lab tools on the right, under the live view.
+class _ControlDeck extends StatelessWidget {
+  const _ControlDeck({required this.controller});
+
+  final LabController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // One row only when the transport bar and the tools both fit unwrapped.
+        if (constraints.maxWidth >= 1200) {
+          return Row(
+            children: [
+              Expanded(child: TransportBar(controller: controller)),
+              const SizedBox(width: 12),
+              ToolDock(controller: controller),
+            ],
+          );
+        }
+        return Wrap(
+          spacing: 12,
+          runSpacing: 10,
+          children: [
+            TransportBar(controller: controller),
+            ToolDock(controller: controller, compact: constraints.maxWidth < 640),
+          ],
+        );
+      },
     );
   }
 }

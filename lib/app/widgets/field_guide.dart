@@ -31,11 +31,13 @@ class FieldGuide extends StatelessWidget {
       if (predation) (_Glyph.eaten, 'A burst: eaten by a larger microbe.'),
     ];
     const text = Slide.ink;
-    return Container(
+    final open = controller.showGuide;
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
       width: overlay ? 276 : null,
-      padding: const EdgeInsets.fromLTRB(12, 10, 10, 6),
+      padding: EdgeInsets.fromLTRB(14, 10, 10, open ? 6 : 10),
       decoration: BoxDecoration(
-        color: Slide.bright.withValues(alpha: 0.96),
+        color: Slide.bright,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: Slide.ink.withValues(alpha: 0.2)),
         boxShadow: overlay ? const [BoxShadow(color: Color(0x40000000), blurRadius: 14, offset: Offset(0, 4))] : null,
@@ -44,38 +46,38 @@ class FieldGuide extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Row(
-            children: [
-              Text('FIELD GUIDE', style: Styles.label.copyWith(color: Slide.ink)),
-              const Spacer(),
-              Semantics(
-                button: true,
-                label: 'Close the field guide',
-                child: InkWell(
-                  onTap: controller.toggleGuide,
-                  borderRadius: BorderRadius.circular(4),
-                  child: const Padding(
-                    padding: EdgeInsets.all(2),
-                    child: Icon(Icons.close, size: 16, color: Slide.ghost),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          for (final (glyph, line) in rows)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 6),
+          Semantics(
+            button: true,
+            label: open ? 'Collapse the field guide' : 'Show the field guide',
+            child: InkWell(
+              onTap: controller.toggleGuide,
+              borderRadius: BorderRadius.circular(4),
               child: Row(
                 children: [
-                  SizedBox(width: 44, height: 28, child: CustomPaint(painter: _GlyphPainter(glyph))),
+                  const Icon(Icons.biotech_outlined, size: 16, color: Slide.ink),
                   const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(line, style: const TextStyle(fontSize: 12, height: 1.3, color: text)),
-                  ),
+                  Text("WHAT YOU'RE LOOKING AT", style: Styles.label.copyWith(color: Slide.ink)),
+                  const Spacer(),
+                  Icon(open ? Icons.expand_less : Icons.expand_more, size: 18, color: Slide.ghost),
                 ],
               ),
             ),
+          ),
+          if (open) const SizedBox(height: 8),
+          if (open)
+            for (final (glyph, line) in rows)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Row(
+                  children: [
+                    SizedBox(width: 44, height: 28, child: CustomPaint(painter: _GlyphPainter(glyph))),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(line, style: const TextStyle(fontSize: 12, height: 1.3, color: text)),
+                    ),
+                  ],
+                ),
+              ),
         ],
       ),
     );
@@ -194,7 +196,8 @@ class FieldCaption extends StatelessWidget {
                   Stack(alignment: Alignment.topLeft, children: [...previous, ?current]),
               child: Text(
                 controller.narration,
-                key: ValueKey(controller.narration),
+                // Fade only when the sentence changes; counts that tick at high speed update in place.
+                key: ValueKey(controller.narration.replaceAll(RegExp(r'\d+'), '#')),
                 style: const TextStyle(fontSize: 13.5, height: 1.45, color: Palette.cream),
               ),
             ),

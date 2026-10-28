@@ -81,33 +81,45 @@ class _PopulationPainter extends CustomPainter {
 
 /// Mean of one trait over time, with a band of one standard deviation.
 class TraitChart extends StatelessWidget {
-  const TraitChart({super.key, required this.samples, required this.trait, required this.range, this.height = 56});
+  const TraitChart({
+    super.key,
+    required this.samples,
+    required this.trait,
+    required this.range,
+    this.height = 56,
+    this.trendOnly = false,
+  });
 
   final List<Sample> samples;
   final Trait trait;
   final TraitRange range;
   final double height;
 
+  /// Scale to the mean alone, without the spread band, so small trends show
+  /// clearly in a short sparkline. The starting value is marked with a dotted line.
+  final bool trendOnly;
+
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       height: height,
-      child: CustomPaint(painter: _TraitPainter(samples, trait, range), size: Size.infinite),
+      child: CustomPaint(painter: _TraitPainter(samples, trait, range, trendOnly), size: Size.infinite),
     );
   }
 }
 
 class _TraitPainter extends CustomPainter {
-  _TraitPainter(this.samples, this.trait, this.range);
+  _TraitPainter(this.samples, this.trait, this.range, this.trendOnly);
 
   final List<Sample> samples;
   final Trait trait;
   final TraitRange range;
+  final bool trendOnly;
 
   @override
   void paint(Canvas canvas, Size size) {
     final plot = _Plot(size, left: 0, bottomPad: 2);
-    plot.drawFrame(canvas, lines: 2);
+    if (!trendOnly) plot.drawFrame(canvas, lines: 2);
     final alive = [
       for (final s in samples)
         if (s.population > 0) s,
@@ -118,8 +130,14 @@ class _TraitPainter extends CustomPainter {
     var low = double.infinity, high = double.negativeInfinity;
     for (final i in idx) {
       final t = alive[i].traits[trait]!;
-      low = math.min(low, t.mean - t.deviation);
-      high = math.max(high, t.mean + t.deviation);
+      low = math.min(low, trendOnly ? t.mean : t.mean - t.deviation);
+      high = math.max(high, trendOnly ? t.mean : t.mean + t.deviation);
+    }
+    final start = alive.first.traits[trait]!.mean;
+    if (trendOnly) {
+      // At least ±6% of the starting value, so noise does not look like a trend.
+      low = math.min(low, start * 0.94);
+      high = math.max(high, start * 1.06);
     }
     final pad = math.max((high - low) * 0.15, (range.max - range.min) * 0.02);
     low = math.max(range.min, low - pad);
@@ -128,6 +146,40 @@ class _TraitPainter extends CustomPainter {
 
     double norm(double v) => (v - low) / (high - low);
     final color = Palette.trait(trait);
+
+    if (trendOnly) {
+      final y = plot.y(norm(start), 1);
+      final dash = Paint()
+        ..color = Palette.lineStrong
+        ..strokeWidth = 1;
+      for (var x = plot.left; x < plot.right; x += 6) {
+        canvas.drawLine(Offset(x, y), Offset(math.min(x + 3, plot.right), y), dash);
+      }
+      final values = [for (final i in idx) norm(alive[i].traits[trait]!.mean)];
+      final area = Path()..moveTo(plot.x(0, values.length), plot.bottom);
+      for (var i = 0; i < values.length; i++) {
+        area.lineTo(plot.x(i, values.length), plot.y(values[i], 1));
+      }
+      area
+        ..lineTo(plot.x(values.length - 1, values.length), plot.bottom)
+        ..close();
+      canvas.drawPath(
+        area,
+        Paint()
+          ..shader = LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [color.withValues(alpha: 0.22), color.withValues(alpha: 0)],
+          ).createShader(Offset.zero & size),
+      );
+      plot.line(canvas, values, 1, color, width: 1.6);
+      canvas.drawCircle(
+        Offset(plot.x(values.length - 1, values.length), plot.y(values.last, 1)),
+        2.6,
+        Paint()..color = color,
+      );
+      return;
+    }
 
     final band = Path();
     for (var i = 0; i < idx.length; i++) {

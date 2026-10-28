@@ -181,18 +181,35 @@ void main() {
     expect(find.text('Conditions match the running sample.'), findsOneWidget);
   });
 
-  testWidgets('the field guide explains the symbols and can be closed for good', (tester) async {
+  testWidgets('the field guide sits in the Learn tab, not over the view, and remembers being collapsed', (
+    tester,
+  ) async {
     final store = MemoryProgressStore(seen: true);
     final controller = await pumpLab(tester, const Size(1440, 900), store: store);
-    expect(find.text('FIELD GUIDE'), findsOneWidget);
+    expect(find.text("WHAT YOU'RE LOOKING AT"), findsOneWidget);
     expect(find.textContaining('It swells and fills'), findsOneWidget);
-    await tester.tap(find.bySemanticsLabel('Close the field guide'));
+    final view = tester.getRect(find.byType(FieldView));
+    final guide = tester.getRect(find.text("WHAT YOU'RE LOOKING AT"));
+    expect(view.overlaps(guide), isFalse);
+
+    await tester.tap(find.text("WHAT YOU'RE LOOKING AT"));
     await tester.pump();
-    expect(find.text('FIELD GUIDE'), findsNothing);
+    expect(find.textContaining('It swells and fills'), findsNothing);
     expect(store.hideGuide, isTrue);
-    await tester.tap(find.text('Guide'));
+    await tester.tap(find.text("WHAT YOU'RE LOOKING AT"));
     await tester.pump();
     expect(controller.showGuide, isTrue);
+  });
+
+  testWidgets('a laptop-sized window keeps the controls on screen and off the view', (tester) async {
+    await pumpLab(tester, const Size(1280, 720));
+    final view = tester.getRect(find.byType(FieldView));
+    for (final label in ['Pause', 'New seed', 'Inspect & pipette', 'UV pulse', 'Sense']) {
+      final rect = tester.getRect(find.text(label).first);
+      expect(rect.right, lessThanOrEqualTo(1280), reason: label);
+      expect(rect.bottom, lessThanOrEqualTo(720), reason: label);
+      expect(view.overlaps(rect), isFalse, reason: label);
+    }
   });
 
   testWidgets('the caption explains the field, then reports births and deaths', (tester) async {

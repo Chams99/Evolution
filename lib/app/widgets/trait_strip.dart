@@ -5,8 +5,8 @@ import '../lab_controller.dart';
 import '../theme.dart';
 import 'charts.dart';
 
-/// One card per trait under the field: where it is, how far it has moved
-/// since the start, whether selection is pushing it right now, and its trend.
+/// One card per trait under the view: where it is, how far it has moved since
+/// the start (dotted line), whether selection is pushing it right now, and its trend.
 class TraitStrip extends StatelessWidget {
   const TraitStrip({super.key, required this.controller});
 
@@ -56,54 +56,102 @@ class _TraitCard extends StatelessWidget {
         : (null, 'neutral', Palette.faint);
     final extinct = controller.world.extinct;
 
+    final name = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Palette.traitIcon(trait), size: 13, color: color),
+        const SizedBox(width: 6),
+        Text(trait.label, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
+      ],
+    );
+    final value = Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Text(extinct ? '—' : now.mean.toStringAsFixed(digits), style: Styles.readout.copyWith(fontSize: 17)),
+        const SizedBox(width: 6),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 2),
+          child: Text(
+            '${change >= 0 ? '+' : ''}${(change * 100).round()}%',
+            style: Styles.readout.copyWith(fontSize: 11.5, color: change.abs() < 0.05 ? Palette.faint : Palette.cream),
+          ),
+        ),
+      ],
+    );
+    final badge = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Flexible(
+          child: Text(
+            extinct ? '' : verdict,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: verdictColor),
+          ),
+        ),
+        if (arrow != null && !extinct) ...[const SizedBox(width: 2), Icon(arrow, size: 12, color: verdictColor)],
+      ],
+    );
+    final chart = TraitChart(
+      samples: history,
+      trait: trait,
+      range: controller.config.limits.of(trait),
+      height: 34,
+      trendOnly: true,
+    );
+
     return Container(
-      padding: const EdgeInsets.fromLTRB(10, 8, 10, 6),
+      padding: const EdgeInsets.fromLTRB(12, 9, 12, 9),
       decoration: BoxDecoration(
         color: Palette.surface,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: Palette.line),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Icon(Palette.traitIcon(trait), size: 13, color: color),
-              const SizedBox(width: 6),
-              Text(trait.label, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  extinct ? '' : verdict,
-                  textAlign: TextAlign.right,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: verdictColor),
-                ),
-              ),
-              if (arrow != null && !extinct) ...[const SizedBox(width: 2), Icon(arrow, size: 12, color: verdictColor)],
-            ],
-          ),
-          const SizedBox(height: 4),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(extinct ? '—' : now.mean.toStringAsFixed(digits), style: Styles.readout.copyWith(fontSize: 17)),
-              const SizedBox(width: 6),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 2),
-                child: Text(
-                  '${change >= 0 ? '+' : ''}${(change * 100).round()}%',
-                  style: Styles.readout.copyWith(
-                    fontSize: 11.5,
-                    color: change.abs() < 0.05 ? Palette.faint : Palette.cream,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxWidth >= 300) {
+            return Row(
+              children: [
+                SizedBox(
+                  width: 96,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [name, const SizedBox(height: 4), value],
                   ),
                 ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [badge, const SizedBox(height: 4), chart],
+                  ),
+                ),
+              ],
+            );
+          }
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Flexible(child: name),
+                  if (arrow != null && !extinct) ...[const Spacer(), Icon(arrow, size: 13, color: verdictColor)],
+                ],
+              ),
+              const SizedBox(height: 4),
+              value,
+              const SizedBox(height: 2),
+              chart,
+              const SizedBox(height: 3),
+              Text(
+                extinct ? '' : verdict,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: verdictColor),
               ),
             ],
-          ),
-          const SizedBox(height: 2),
-          TraitChart(samples: history, trait: trait, range: controller.config.limits.of(trait), height: 26),
-        ],
+          );
+        },
       ),
     );
   }
