@@ -39,7 +39,9 @@ class PopulationChart extends StatelessWidget {
       label: latest == null ? 'Population chart' : 'Population ${latest.population}, food ${latest.food}',
       child: SizedBox(
         height: height,
-        child: CustomPaint(painter: _PopulationPainter(samples), size: Size.infinite),
+        child: RepaintBoundary(
+          child: CustomPaint(painter: _PopulationPainter(samples), size: Size.infinite),
+        ),
       ),
     );
   }
@@ -103,7 +105,9 @@ class TraitChart extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       height: height,
-      child: CustomPaint(painter: _TraitPainter(samples, trait, range, trendOnly), size: Size.infinite),
+      child: RepaintBoundary(
+        child: CustomPaint(painter: _TraitPainter(samples, trait, range, trendOnly), size: Size.infinite),
+      ),
     );
   }
 }
@@ -212,7 +216,9 @@ class FamiliesChart extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       height: height,
-      child: CustomPaint(painter: _FamiliesPainter(samples), size: Size.infinite),
+      child: RepaintBoundary(
+        child: CustomPaint(painter: _FamiliesPainter(samples), size: Size.infinite),
+      ),
     );
   }
 }
@@ -305,7 +311,9 @@ class TraitScatter extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       height: height,
-      child: CustomPaint(painter: _ScatterPainter(organisms, limits, selected), size: Size.infinite),
+      child: RepaintBoundary(
+        child: CustomPaint(painter: _ScatterPainter(organisms, limits, selected), size: Size.infinite),
+      ),
     );
   }
 }

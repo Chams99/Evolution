@@ -365,7 +365,9 @@ class _Field extends StatelessWidget {
           left: 12,
           top: compact ? 40 : 44,
           right: 120,
-          child: MilestoneFeed(controller: controller, compact: compact),
+          child: RepaintBoundary(
+            child: MilestoneFeed(controller: controller, compact: compact),
+          ),
         ),
         Positioned(
           right: 10,

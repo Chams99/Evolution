@@ -57,7 +57,7 @@ class Readouts extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder(
-      valueListenable: controller.frame,
+      valueListenable: controller.samples,
       builder: (context, _, _) {
         final world = controller.world;
         Widget item(String label, String value, [Color color = Palette.cream]) {
@@ -314,7 +314,7 @@ class ChartsPanel extends StatelessWidget {
                 style: Styles.label.copyWith(color: Palette.faint, fontWeight: FontWeight.w400),
               ),
               child: ValueListenableBuilder(
-                valueListenable: controller.frame,
+                valueListenable: controller.samples,
                 builder: (context, _, _) => TraitScatter(
                   organisms: controller.world.organisms,
                   limits: controller.config.limits,
@@ -452,7 +452,7 @@ class InspectorPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder(
-      valueListenable: controller.frame,
+      valueListenable: controller.samples,
       builder: (context, _, _) {
         final o = controller.selected;
         if (o == null) {

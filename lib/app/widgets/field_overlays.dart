@@ -143,7 +143,7 @@ class MicroscopeHud extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    _RecDot(playing: controller.playing),
+                    RepaintBoundary(child: _RecDot(playing: controller.playing)),
                     const SizedBox(width: 6),
                     Text(controller.playing ? 'LIVE' : 'PAUSED', style: style),
                     Text('  ·  $label', style: style.copyWith(color: Palette.muted)),
