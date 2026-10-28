@@ -56,6 +56,13 @@ class LessonStrip extends StatelessWidget {
               if (!done) ...[
                 const SizedBox(height: 6),
                 Text(lesson.watch, style: Theme.of(context).textTheme.bodySmall),
+                if (controller.speed > 1) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    'Running at ${controller.speed}× so generations pass quickly. Slow it down any time.',
+                    style: Theme.of(context).textTheme.bodySmall!.copyWith(color: Palette.faint),
+                  ),
+                ],
                 const SizedBox(height: 12),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(3),

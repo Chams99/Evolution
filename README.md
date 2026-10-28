@@ -4,7 +4,16 @@ A natural selection sandbox built with Flutter. A population of simple organisms
 
 **[Open the live demo](https://chams99.github.io/Evolution/)**. It runs in the browser, with no install.
 
-![The Arms race lesson in progress: hunters with long wakes, a live goal, and the wet-season tint on the field](docs/screenshot.png)
+![A dry season two and a half minutes in: energy rings, starvation marks, the field guide, a live caption and trait cards showing speed favoured and size selected against](docs/screenshot.png)
+
+## Reading the field
+
+Everything on the field is explained on the field itself. A **field guide** shows what each shape means, drawn exactly as it appears. A **caption** underneath says what is happening in plain words, for example "5 born and 32 died in the last 10 seconds. Faster organisms are leaving the most offspring right now". **Trait cards** under the field show each trait's value, how far it has moved since the start, and whether selection is pushing it up or down right now.
+
+- **The ring around each body is its energy.** It fills as the organism eats, and when it closes the organism splits in two.
+- **Colour and wake show speed.** Terracotta bodies are slow. Gold bodies with long wakes are fast.
+- **Body size shows the size trait.**
+- **Events are marked where they happen.** Births flash, a ✕ marks starvation, and a red burst marks a predator kill.
 
 ## Learn by experiment
 
@@ -18,13 +27,13 @@ The **Learn** tab has five guided experiments. Each one sets up a world, asks a 
 | 4 | No variation, no evolution | Every organism is identical and children are exact copies. Can anything evolve? |
 | 5 | Bottleneck | A catastrophe wipes out most of the population at random. What do the survivors pass on? |
 
-While any run is going, the trait panel marks each trait as **▲ favoured**, **▼ selected against** or neutral. The mark is a standardised selection differential: how far the parents of the last 30 seconds of births sit from the population mean. A "Right now" line puts it into words, for example "Faster organisms are leaving the most offspring right now". Progress is saved, and a short tour runs on the first visit.
+Lessons run at 4× so generations pass quickly. The **favoured** and **selected against** marks on the trait cards are a standardised selection differential: how far the parents of the last 30 seconds of births sit from the population mean. Progress is saved, and a short tour runs on the first visit.
 
 ## Play with it
 
 - **Inspect and feed.** Tap an organism to follow it: its energy, genome, offspring and kills, and its whole living family, ringed on the field. Tap empty ground to drop food.
 - **Cause disasters.** Strike with a **meteor**, trigger a **famine**, or make **food rain**, then watch who recovers.
-- **Watch the season.** The ground turns dry and warm when food is short and green when it is plentiful. Births ripple, deaths fade, and each body's wake grows with its speed.
+- **Watch the season.** The ground turns dry and warm when food is short, and green when it is plentiful.
 - **Catch milestones.** New generations, population crashes, trait records and the fate of the organism you are following pop up on the field.
 - **Compare environments.** Four presets push selection in different directions (see below), and every parameter can be tuned. The same seed always replays the same run.
 - **Control time.** Play at 1× to 16×, or step one simulated second at a time. Keyboard: `Space` plays or pauses, `→` steps, `R` restarts, `1` selects the inspect tool and `2` the meteor.
@@ -60,7 +69,7 @@ These results come from [`tool/balance.dart`](tool/balance.dart): 10 simulated m
 | Bloom | Plenty of food | The largest populations, and the fastest rise in speed |
 | Hunters | Predation on | Size, speed and sense escalate together |
 
-![Drought preset: speed falls because energy is too scarce to spend on running](docs/drought.png)
+![The Arms race lesson in progress: hunters with long wakes and a live goal in the side panel](docs/lesson.png)
 
 ## How it is built
 

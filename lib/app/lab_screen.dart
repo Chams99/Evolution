@@ -6,11 +6,13 @@ import 'lab_controller.dart';
 import 'progress_store.dart';
 import 'theme.dart';
 import 'widgets/charts.dart';
+import 'widgets/field_guide.dart';
 import 'widgets/field_overlays.dart';
 import 'widgets/field_view.dart';
 import 'widgets/intro.dart';
 import 'widgets/learn.dart';
 import 'widgets/panels.dart';
+import 'widgets/trait_strip.dart';
 
 class LabScreen extends StatefulWidget {
   const LabScreen({super.key, this.controller});
@@ -97,18 +99,16 @@ class _LabScreenState extends State<LabScreen> with SingleTickerProviderStateMix
                     Readouts(controller: _controller),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 14),
                 Expanded(
                   child: Center(child: _Field(controller: _controller)),
                 ),
-                const SizedBox(height: 14),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Expanded(child: TransportBar(controller: _controller)),
-                    const _Legend(),
-                  ],
-                ),
+                const SizedBox(height: 12),
+                FieldCaption(controller: _controller),
+                const SizedBox(height: 12),
+                TraitStrip(controller: _controller),
+                const SizedBox(height: 12),
+                TransportBar(controller: _controller),
               ],
             ),
           ),
@@ -193,6 +193,20 @@ class _LabScreenState extends State<LabScreen> with SingleTickerProviderStateMix
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: _Field(controller: _controller, compact: compact),
                 ),
+                if (compact)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                    child: Center(child: ToolDock(controller: _controller, compact: true)),
+                  ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                  child: FieldCaption(controller: _controller),
+                ),
+                if (compact && _controller.showGuide)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                    child: FieldGuide(controller: _controller, overlay: false),
+                  ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
                   child: FittedBox(
@@ -202,7 +216,11 @@ class _LabScreenState extends State<LabScreen> with SingleTickerProviderStateMix
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 6, 16, 8),
+                  padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
+                  child: TraitStrip(controller: _controller),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
                   child: TransportBar(controller: _controller, compact: compact),
                 ),
               ],
@@ -222,10 +240,7 @@ class _LabScreenState extends State<LabScreen> with SingleTickerProviderStateMix
             ),
             ListView(
               padding: const EdgeInsets.all(16),
-              children: [
-                InspectorPanel(controller: _controller),
-                const _Legend(),
-              ],
+              children: [InspectorPanel(controller: _controller)],
             ),
             ListView(
               padding: const EdgeInsets.all(16),
@@ -326,11 +341,8 @@ class _Field extends StatelessWidget {
           child: MilestoneFeed(controller: controller, compact: compact),
         ),
         Positioned(right: 10, top: 10, child: SeasonBadge(controller: controller)),
-        Positioned(
-          left: 10,
-          bottom: 10,
-          child: ToolDock(controller: controller, compact: compact),
-        ),
+        if (!compact && controller.showGuide) Positioned(right: 10, top: 58, child: FieldGuide(controller: controller)),
+        if (!compact) Positioned(left: 10, bottom: 10, child: ToolDock(controller: controller)),
         if (world.extinct)
           Positioned.fill(
             child: Center(
@@ -374,50 +386,6 @@ class _Field extends StatelessWidget {
             ),
           ),
       ],
-    );
-  }
-}
-
-class _Legend extends StatelessWidget {
-  const _Legend();
-
-  @override
-  Widget build(BuildContext context) {
-    final style = Styles.label.copyWith(fontSize: 10, fontWeight: FontWeight.w400, color: Palette.faint);
-    Widget dot(Color color, double size) => Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-    );
-    return Padding(
-      padding: const EdgeInsets.only(top: 6),
-      child: Wrap(
-        spacing: 14,
-        runSpacing: 6,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              dot(Palette.terracotta, 8),
-              const SizedBox(width: 3),
-              dot(Palette.gold, 8),
-              const SizedBox(width: 6),
-              Text('SLOW → FAST', style: style),
-            ],
-          ),
-          Text('RADIUS = SIZE', style: style),
-          Text('TAIL = SPEED', style: style),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              dot(Palette.food, 5),
-              const SizedBox(width: 6),
-              Text('FOOD', style: style),
-            ],
-          ),
-        ],
-      ),
     );
   }
 }

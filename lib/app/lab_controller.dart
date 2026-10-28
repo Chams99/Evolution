@@ -106,6 +106,7 @@ class LabController extends ChangeNotifier {
   Set<String> _completed = {};
   bool _introSeen = true;
   bool _skipIntro = false;
+  bool _showGuide = true;
   bool _progressLoaded = false;
 
   final List<Milestone> milestones = [];
@@ -147,9 +148,11 @@ class LabController extends ChangeNotifier {
   Future<void> _loadProgress() async {
     final completed = await _store.completedLessons();
     final introSeen = await _store.introSeen();
+    final guideHidden = await _store.guideHidden();
     if (_disposed) return;
     _completed = {..._completed, ...completed};
     _introSeen = introSeen;
+    _showGuide = !guideHidden;
     _progressLoaded = true;
     notifyListeners();
   }
@@ -158,6 +161,32 @@ class LabController extends ChangeNotifier {
     _introSeen = true;
     _store.saveIntroSeen();
     notifyListeners();
+  }
+
+  /// Whether the field guide (what each shape and colour means) is open.
+  bool get showGuide => _showGuide;
+
+  void toggleGuide() {
+    _showGuide = !_showGuide;
+    _store.saveGuideHidden(!_showGuide);
+    notifyListeners();
+  }
+
+  /// What is happening on the field, in plain words, for the caption under it.
+  String get narration {
+    final world = _world;
+    if (world.extinct) return insight;
+    if (world.seconds < 25 && world.totalBirths < 5) {
+      return 'Each glowing body is an organism looking for green food. The ring around it fills as it eats. '
+          'When the ring closes, it splits in two and the child inherits its traits, with small changes.';
+    }
+    final recent = world.history.length > 10 ? world.history.sublist(world.history.length - 10) : world.history;
+    var born = 0, died = 0;
+    for (final s in recent) {
+      born += s.births;
+      died += s.starved + s.diedOfAge + s.eaten + s.struck;
+    }
+    return '$born born and $died died in the last 10 seconds. $insight';
   }
 
   void reopenIntro() {
@@ -290,6 +319,8 @@ class LabController extends ChangeNotifier {
     _preset = lesson.preset;
     _config = lesson.config;
     _tool = lesson.usesMeteor ? Tool.meteor : Tool.hand;
+    // Fast enough to see generations pass; the meteor lesson stays slow enough to aim.
+    _speed = lesson.usesMeteor ? 2 : 4;
     restart(keepLesson: true);
   }
 

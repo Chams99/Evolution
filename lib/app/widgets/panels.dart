@@ -114,7 +114,7 @@ class TransportBar extends StatelessWidget {
           label: '+1 s',
           icon: Icons.skip_next,
           compact: compact,
-          tooltip: 'Advance one simulated second (→)',
+          tooltip: 'Advance one simulated second (right arrow key)',
           onPressed: extinct ? null : controller.stepSecond,
         ),
         _SpeedPicker(controller: controller),
@@ -260,8 +260,8 @@ class ChartsPanel extends StatelessWidget {
                 children: [
                   for (final trait in Trait.values) _TraitRow(trait: trait, controller: controller),
                   Text(
-                    '▲ favoured and ▼ selected against compare the parents of the last 30 seconds of births with '
-                    'the whole population.',
+                    'An up arrow means favoured, a down arrow selected against. Both compare the parents of the '
+                    'last 30 seconds of births with the whole population.',
                     style: Theme.of(context).textTheme.bodySmall!.copyWith(fontSize: 11.5),
                   ),
                 ],
@@ -383,19 +383,20 @@ class _SelectionBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final v = value;
-    final (text, tone, tip) = v == null
-        ? ('…', Palette.faint, 'Not enough recent births to measure selection yet')
+    final (IconData icon, tone, tip) = v == null
+        ? (Icons.more_horiz, Palette.faint, 'Not enough recent births to measure selection yet')
         : v > _threshold
-        ? ('▲', color, 'Favoured: recent parents sit ${v.toStringAsFixed(2)} sd above the population')
+        ? (Icons.arrow_upward, color, 'Favoured: recent parents sit ${v.toStringAsFixed(2)} sd above the population')
         : v < -_threshold
-        ? ('▼', color, 'Selected against: recent parents sit ${(-v).toStringAsFixed(2)} sd below the population')
-        : ('–', Palette.faint, 'Neutral: recent parents look like the rest of the population');
+        ? (
+            Icons.arrow_downward,
+            color,
+            'Selected against: recent parents sit ${(-v).toStringAsFixed(2)} sd below the population',
+          )
+        : (Icons.remove, Palette.faint, 'Neutral: recent parents look like the rest of the population');
     return Tooltip(
       message: tip,
-      child: Text(
-        text,
-        style: TextStyle(fontSize: 11, color: tone, fontWeight: FontWeight.w600),
-      ),
+      child: Icon(icon, size: 12, color: tone),
     );
   }
 }

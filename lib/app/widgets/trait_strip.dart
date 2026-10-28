@@ -1,0 +1,114 @@
+import 'package:flutter/material.dart';
+
+import '../../sim/genome.dart';
+import '../lab_controller.dart';
+import '../theme.dart';
+import 'charts.dart';
+
+/// One card per trait under the field: where it is, how far it has moved
+/// since the start, whether selection is pushing it right now, and its trend.
+class TraitStrip extends StatelessWidget {
+  const TraitStrip({super.key, required this.controller});
+
+  final LabController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder(
+      valueListenable: controller.samples,
+      builder: (context, _, _) => Row(
+        children: [
+          for (final (i, trait) in Trait.values.indexed) ...[
+            if (i > 0) const SizedBox(width: 10),
+            Expanded(
+              child: _TraitCard(trait: trait, controller: controller),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _TraitCard extends StatelessWidget {
+  const _TraitCard({required this.trait, required this.controller});
+
+  final Trait trait;
+  final LabController controller;
+
+  static const _threshold = 0.2;
+
+  @override
+  Widget build(BuildContext context) {
+    final history = controller.world.history;
+    final color = Palette.trait(trait);
+    final now = history.last.traits[trait]!;
+    final start = history.first.traits[trait]!;
+    final change = start.mean == 0 ? 0.0 : now.mean / start.mean - 1;
+    final digits = trait == Trait.sense ? 0 : 2;
+    final s = controller.selectionOf(trait);
+    final (IconData? arrow, verdict, verdictColor) = s == null
+        ? (null, 'measuring…', Palette.faint)
+        : s > _threshold
+        ? (Icons.arrow_upward, 'favoured', color)
+        : s < -_threshold
+        ? (Icons.arrow_downward, 'selected against', color)
+        : (null, 'neutral', Palette.faint);
+    final extinct = controller.world.extinct;
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(10, 8, 10, 6),
+      decoration: BoxDecoration(
+        color: Palette.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Palette.line),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+              ),
+              const SizedBox(width: 6),
+              Text(trait.label, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  extinct ? '' : verdict,
+                  textAlign: TextAlign.right,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: verdictColor),
+                ),
+              ),
+              if (arrow != null && !extinct) ...[const SizedBox(width: 2), Icon(arrow, size: 12, color: verdictColor)],
+            ],
+          ),
+          const SizedBox(height: 4),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(extinct ? '—' : now.mean.toStringAsFixed(digits), style: Styles.readout.copyWith(fontSize: 17)),
+              const SizedBox(width: 6),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 2),
+                child: Text(
+                  '${change >= 0 ? '+' : ''}${(change * 100).round()}%',
+                  style: Styles.readout.copyWith(
+                    fontSize: 11.5,
+                    color: change.abs() < 0.05 ? Palette.faint : (change > 0 ? Palette.food : Palette.terracotta),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 2),
+          TraitChart(samples: history, trait: trait, range: controller.config.limits.of(trait), height: 26),
+        ],
+      ),
+    );
+  }
+}

@@ -221,6 +221,14 @@ class ToolDock extends StatelessWidget {
           ),
           Container(width: 1, height: 22, margin: const EdgeInsets.symmetric(horizontal: 4), color: Palette.line),
           _ToolButton(
+            icon: Icons.menu_book_outlined,
+            label: 'Guide',
+            hint: controller.showGuide ? 'Hide the field guide' : 'What do the shapes and colours mean?',
+            selected: controller.showGuide,
+            compact: compact,
+            onTap: controller.toggleGuide,
+          ),
+          _ToolButton(
             icon: Icons.radar,
             label: 'Sense',
             hint: controller.showSense ? 'Hide sensing radii' : 'Draw every sensing radius',

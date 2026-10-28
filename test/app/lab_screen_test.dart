@@ -58,6 +58,10 @@ void main() {
       tester,
     ) async {
       await pumpLab(tester, size);
+      expect(find.text('RIGHT NOW', skipOffstage: false), findsOneWidget);
+      // Scroll the field away so the pinned tabs and their content fill the screen.
+      await tester.drag(find.byType(NestedScrollView), const Offset(0, -1200));
+      await frames(tester, 3);
       expect(find.text('RIGHT NOW'), findsOneWidget);
       await openTab(tester, 'LEARN');
       expect(find.text('Survival of the fastest'), findsOneWidget);
@@ -103,7 +107,7 @@ void main() {
     await tester.pump();
     expect(controller.world.food.length, greaterThan(before));
 
-    final target = controller.world.organisms.firstWhere((o) => o.x > 200 && o.y > 120 && o.y < 480);
+    final target = controller.world.organisms.firstWhere((o) => o.x > 200 && o.x < 560 && o.y > 120 && o.y < 420);
     await tester.tapAt(fieldPoint(tester, controller, target.x, target.y));
     await tester.pump();
     expect(controller.selected, same(target));
@@ -116,7 +120,7 @@ void main() {
     await tester.tap(find.text('Meteor'));
     await tester.pump();
     expect(controller.tool, Tool.meteor);
-    final target = controller.world.organisms.firstWhere((o) => o.x > 200 && o.y > 120 && o.y < 480);
+    final target = controller.world.organisms.firstWhere((o) => o.x > 200 && o.x < 560 && o.y > 120 && o.y < 420);
     await tester.tapAt(fieldPoint(tester, controller, target.x, target.y));
     await tester.pump();
     expect(target.alive, isFalse);
@@ -160,6 +164,41 @@ void main() {
     expect(store.seen, isTrue);
     expect(find.text('Meet the organisms'), findsNothing);
     expect(controller.lesson?.lesson, lessons.first);
+  });
+
+  testWidgets('the field guide explains the symbols and can be closed for good', (tester) async {
+    final store = MemoryProgressStore(seen: true);
+    final controller = await pumpLab(tester, const Size(1440, 900), store: store);
+    expect(find.text('FIELD GUIDE'), findsOneWidget);
+    expect(find.textContaining('The ring is its energy'), findsOneWidget);
+    await tester.tap(find.bySemanticsLabel('Close the field guide'));
+    await tester.pump();
+    expect(find.text('FIELD GUIDE'), findsNothing);
+    expect(store.hideGuide, isTrue);
+    await tester.tap(find.text('Guide'));
+    await tester.pump();
+    expect(controller.showGuide, isTrue);
+  });
+
+  testWidgets('the caption explains the field, then reports births and deaths', (tester) async {
+    final controller = await pumpLab(tester, const Size(1440, 900));
+    expect(find.textContaining('When the ring closes, it splits in two'), findsOneWidget);
+    controller.world.step(30 * 40);
+    controller.stepSecond();
+    await tester.pump();
+    expect(find.textContaining('in the last 10 seconds'), findsOneWidget);
+  });
+
+  testWidgets('trait cards sit under the field on every layout', (tester) async {
+    await pumpLab(tester, const Size(390, 844));
+    expect(find.text('Size'), findsWidgets);
+    expect(find.textContaining('measuring'), findsWidgets);
+  });
+
+  test('lessons fast-forward so generations pass', () {
+    final controller = LabController()..startLesson(lessons.first);
+    addTearDown(controller.dispose);
+    expect(controller.speed, 4);
   });
 
   test('links can open a specific run', () {
