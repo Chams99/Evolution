@@ -1,39 +1,20 @@
 import 'package:flutter/material.dart';
-import 'theme/app_theme.dart';
-import 'pages/home_page.dart';
-import 'pages/simulation_page.dart';
-import 'pages/statistics_page.dart';
-import 'pages/settings_page.dart';
-import 'models/simulation_config.dart';
 
-void main() {
-  runApp(const EvolutionGameApp());
-}
+import 'app/lab_screen.dart';
+import 'app/theme.dart';
 
-class EvolutionGameApp extends StatelessWidget {
-  const EvolutionGameApp({super.key});
+void main() => runApp(const EvolutionApp());
+
+class EvolutionApp extends StatelessWidget {
+  const EvolutionApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Evolution Game',
-      theme: AppTheme.darkTheme,
+      title: 'Evolution',
       debugShowCheckedModeBanner: false,
-      initialRoute: '/',
-      routes: {
-        '/': (context) => const HomePage(),
-        '/simulation': (context) {
-          final duration = ModalRoute.of(context)!.settings.arguments as int?;
-          return SimulationPage(timerDurationSeconds: duration);
-        },
-        '/statistics': (context) => const StatisticsPage(),
-        '/settings': (context) => SettingsPage(
-          initialConfig: SimulationConfig(),
-          onConfigSaved: (config) {
-            // Config saved callback
-          },
-        ),
-      },
+      theme: buildTheme(),
+      home: const LabScreen(),
     );
   }
 }
