@@ -317,15 +317,29 @@ class _ScatterPainter extends CustomPainter {
   final GenomeLimits limits;
   final Organism? selected;
 
+  /// The part of [limits] the population occupies, padded and snapped to 0.1
+  /// so the axes move in steps rather than every frame. Never narrower than
+  /// [minSpan], so a clonal population does not fill the whole chart.
+  static TraitRange _window(Iterable<double> values, TraitRange limits, {double minSpan = 0.6}) {
+    if (values.isEmpty) return limits;
+    var low = values.reduce(math.min), high = values.reduce(math.max);
+    final pad = math.max((high - low) * 0.15, (minSpan - (high - low)) / 2);
+    low = ((low - pad) * 10).floorToDouble() / 10;
+    high = ((high + pad) * 10).ceilToDouble() / 10;
+    return TraitRange(math.max(limits.min, low), math.min(limits.max, high));
+  }
+
   @override
   void paint(Canvas canvas, Size size) {
     final plot = _Plot(size, left: 26, bottomPad: 16);
     plot.drawFrame(canvas, lines: 4, verticals: 4);
+    final speedAxis = _window(organisms.map((o) => o.genome.speed), limits.speed);
+    final sizeAxis = _window(organisms.map((o) => o.genome.size), limits.size);
     final dot = Paint();
     for (final o in organisms) {
       final p = Offset(
-        plot.x(limits.speed.normalize(o.genome.speed), 1, fraction: true),
-        plot.y(limits.size.normalize(o.genome.size), 1),
+        plot.x(speedAxis.normalize(o.genome.speed), 1, fraction: true),
+        plot.y(sizeAxis.normalize(o.genome.size), 1),
       );
       dot.color = familyColor(o.family).withValues(alpha: 0.45 + 0.55 * limits.sense.normalize(o.genome.sense));
       canvas.drawCircle(p, 2.8, dot);
@@ -333,8 +347,8 @@ class _ScatterPainter extends CustomPainter {
     final pick = selected;
     if (pick != null && pick.alive) {
       final p = Offset(
-        plot.x(limits.speed.normalize(pick.genome.speed), 1, fraction: true),
-        plot.y(limits.size.normalize(pick.genome.size), 1),
+        plot.x(speedAxis.normalize(pick.genome.speed), 1, fraction: true),
+        plot.y(sizeAxis.normalize(pick.genome.size), 1),
       );
       canvas.drawCircle(
         p,
@@ -346,18 +360,18 @@ class _ScatterPainter extends CustomPainter {
       );
     }
     String v(double value) => value.toStringAsFixed(1);
-    _text(canvas, v(limits.speed.min), Offset(plot.left, plot.bottom + 3), Palette.faint);
+    _text(canvas, v(speedAxis.min), Offset(plot.left, plot.bottom + 3), Palette.faint);
     _text(canvas, 'SPEED', Offset(plot.left + plot.width / 2 - 14, plot.bottom + 3), Palette.faint);
     _text(
       canvas,
-      v(limits.speed.max),
+      v(speedAxis.max),
       Offset(plot.right - 30, plot.bottom + 3),
       Palette.faint,
       alignRight: true,
       width: 30,
     );
-    _text(canvas, v(limits.size.max), Offset(0, plot.top - 2), Palette.faint);
-    _text(canvas, v(limits.size.min), Offset(0, plot.bottom - 12), Palette.faint);
+    _text(canvas, v(sizeAxis.max), Offset(0, plot.top - 2), Palette.faint);
+    _text(canvas, v(sizeAxis.min), Offset(0, plot.bottom - 12), Palette.faint);
     canvas.save();
     canvas.translate(2, plot.top + plot.height / 2 + 12);
     canvas.rotate(-math.pi / 2);

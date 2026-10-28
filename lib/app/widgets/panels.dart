@@ -47,9 +47,12 @@ class Section extends StatelessWidget {
 
 /// Time, population and generation for the current run.
 class Readouts extends StatelessWidget {
-  const Readouts({super.key, required this.controller});
+  const Readouts({super.key, required this.controller, this.spread = false});
 
   final LabController controller;
+
+  /// Fill the width with left-aligned columns (phones) instead of a compact right-aligned group.
+  final bool spread;
 
   @override
   Widget build(BuildContext context) {
@@ -57,23 +60,24 @@ class Readouts extends StatelessWidget {
       valueListenable: controller.frame,
       builder: (context, _, _) {
         final world = controller.world;
-        Widget item(String label, String value, [Color color = Palette.cream]) => Padding(
-          padding: const EdgeInsets.only(left: 18),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
+        Widget item(String label, String value, [Color color = Palette.cream]) {
+          final column = Column(
+            crossAxisAlignment: spread ? CrossAxisAlignment.start : CrossAxisAlignment.end,
             children: [
-              Text(label, style: Styles.label.copyWith(fontSize: 10, color: Palette.faint)),
+              Text(label, maxLines: 1, style: Styles.label.copyWith(fontSize: 10, color: Palette.faint)),
               const SizedBox(height: 2),
               Text(value, style: Styles.readout.copyWith(color: color)),
             ],
-          ),
-        );
+          );
+          return spread ? Expanded(child: column) : Padding(padding: const EdgeInsets.only(left: 18), child: column);
+        }
+
         return Row(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisSize: spread ? MainAxisSize.max : MainAxisSize.min,
           children: [
             item('TIME', formatClock(world.seconds)),
             item('MICROBES', '${world.organisms.length}'),
-            item('GENERATION', '${world.maxGeneration}'),
+            item(spread ? 'GEN.' : 'GENERATION', '${world.maxGeneration}'),
             item('LIGHT', '${(world.foodSupply * 100).round()}%', Palette.gold),
           ],
         );
@@ -516,7 +520,7 @@ class InspectorPanel extends StatelessWidget {
               _Meter(
                 label: 'Energy',
                 value: o.energy / threshold,
-                detail: '${o.energy.round()} / ${threshold.round()} to divide',
+                detail: '${o.energy.round()} / ${threshold.round()}',
                 color: Palette.gold,
               ),
               _Meter(
@@ -591,7 +595,12 @@ class _Meter extends StatelessWidget {
           ),
           SizedBox(
             width: 120,
-            child: Text(detail, textAlign: TextAlign.right, style: Styles.readout.copyWith(fontSize: 11.5)),
+            child: Text(
+              detail,
+              maxLines: 1,
+              textAlign: TextAlign.right,
+              style: Styles.readout.copyWith(fontSize: 11.5),
+            ),
           ),
         ],
       ),

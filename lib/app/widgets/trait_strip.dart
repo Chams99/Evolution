@@ -143,11 +143,14 @@ class _TraitCard extends StatelessWidget {
               const SizedBox(height: 2),
               chart,
               const SizedBox(height: 3),
-              Text(
-                extinct ? '' : verdict,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: verdictColor),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  extinct ? '' : verdict,
+                  maxLines: 1,
+                  style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: verdictColor),
+                ),
               ),
             ],
           );

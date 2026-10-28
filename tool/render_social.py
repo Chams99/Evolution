@@ -26,7 +26,7 @@ draw = ImageDraw.Draw(card)
 lens_d = 520 * SS
 cx, cy = 870 * SS, 315 * SS
 # A clear patch of slide: below the overlay chips, above the tool dock, left of the field guide.
-view = shot.crop((90, 160, 90 + 420, 160 + 420)).resize((lens_d, lens_d), Image.LANCZOS)
+view = shot.crop((140, 165, 140 + 420, 165 + 420)).resize((lens_d, lens_d), Image.LANCZOS)
 mask = Image.new("L", (lens_d, lens_d), 0)
 ImageDraw.Draw(mask).ellipse([0, 0, lens_d - 1, lens_d - 1], fill=255)
 vignette = Image.new("L", (lens_d, lens_d), 0)

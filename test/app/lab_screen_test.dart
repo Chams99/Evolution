@@ -221,6 +221,19 @@ void main() {
     expect(find.textContaining('in the last 10 seconds'), findsOneWidget);
   });
 
+  testWidgets('on a phone the view labels never overlap and the tools explain themselves', (tester) async {
+    for (final seconds in [0, 20, 40, 60]) {
+      final controller = await pumpLab(tester, const Size(360, 740));
+      controller.world.step(seconds * controller.config.ticksPerSecond);
+      controller.stepSecond();
+      await tester.pump();
+      final live = tester.getRect(find.textContaining('·  POND WATER'));
+      final lamp = tester.getRect(find.textContaining(RegExp(r'^LAMP ')));
+      expect(live.overlaps(lamp), isFalse, reason: 'at $seconds s');
+      expect(find.textContaining('Tap a microbe to follow it'), findsOneWidget);
+    }
+  });
+
   testWidgets('trait cards sit under the field on every layout', (tester) async {
     await pumpLab(tester, const Size(390, 844));
     expect(find.text('Size'), findsWidgets);

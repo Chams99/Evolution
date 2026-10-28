@@ -94,6 +94,8 @@ Traits are told apart by icon and label rather than by competing colours.
 
 **Rendered figures.** The microbes and algae are illustrations rendered by [`tool/render_sprites.py`](tool/render_sprites.py): brightfield-style cells with a dark membrane and a refractive rim, granular cytoplasm, a nucleus with its nucleolus, a contractile vacuole and food vacuoles holding eaten algae. Each cell has three states (hungry, fed, dividing), and algae come as single *Chlorella*-like cells, pairs and four-cell colonies. Bodies are rendered in greyscale and tinted with the family stain on the GPU. They are drawn with `Canvas.drawAtlas` from full-, half- and quarter-size sheets, whichever is closest to the on-screen size, so hundreds of cells stay smooth and fast.
 
+**One icon everywhere.** The icon is the view itself: one stained microbe and a few algae on the slide, seen through the eyepiece. [`tool/render_icons.py`](tool/render_icons.py) draws it with the same cell and algae figures and writes every platform's set from it: an adaptive Android icon with a themed monochrome layer, iOS and macOS sets, a multi-size Windows icon, and the web favicon, touch and install icons. Sizes of 48 px and under get a simpler, bolder drawing so they stay readable. Launch screens on Android and iOS show the same lens on the dark background, so the app never flashes white while it starts.
+
 ## How it is built
 
 ```
@@ -116,6 +118,7 @@ test/
 tool/
   balance.dart        Headless runner used to tune the energy model
   render_sprites.py   Renders the microbe and algae figures at three sizes
+  render_icons.py     Renders the app icon, every platform's icon set and the launch images
   render_social.py    Composes the link-preview card from a screenshot
 web/index.html    Branded loading screen, theme colour and link-preview tags
 ```

@@ -14,7 +14,6 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
 
 OUT = Path(__file__).resolve().parent.parent / "assets" / "sprites"
-OUT.mkdir(parents=True, exist_ok=True)
 
 SS = 4
 W, H = 192, 128          # one cell frame, front of the cell facing +x
@@ -188,12 +187,20 @@ def sheet(frames, fw, fh, factor):
 # Full size for the field guide and close-ups, then half and quarter size for
 # the live view, where cells are only 10 to 30 pixels across.
 LEVELS = {"": 1.0, "@half": 0.5, "@quarter": 0.25}
-cells = [cell_layers(state, seed=11 + i) for i, state in enumerate(STATES)]
-ghost_master = ghost(5)
-algae_master = [alga(k, seed=40 + k) for k in range(3)]
-for suffix, factor in LEVELS.items():
-    sheet([t for t, _ in cells], W, H, factor).save(OUT / f"cell_tint{suffix}.png", optimize=True)
-    sheet([o for _, o in cells], W, H, factor).save(OUT / f"cell_overlay{suffix}.png", optimize=True)
-    sheet([ghost_master], W, H, factor).save(OUT / f"cell_ghost{suffix}.png", optimize=True)
-    sheet(algae_master, 64, 64, factor).save(OUT / f"algae{suffix}.png", optimize=True)
-print("wrote", sorted(p.name for p in OUT.iterdir()))
+
+
+def main():
+    OUT.mkdir(parents=True, exist_ok=True)
+    cells = [cell_layers(state, seed=11 + i) for i, state in enumerate(STATES)]
+    ghost_master = ghost(5)
+    algae_master = [alga(k, seed=40 + k) for k in range(3)]
+    for suffix, factor in LEVELS.items():
+        sheet([t for t, _ in cells], W, H, factor).save(OUT / f"cell_tint{suffix}.png", optimize=True)
+        sheet([o for _, o in cells], W, H, factor).save(OUT / f"cell_overlay{suffix}.png", optimize=True)
+        sheet([ghost_master], W, H, factor).save(OUT / f"cell_ghost{suffix}.png", optimize=True)
+        sheet(algae_master, 64, 64, factor).save(OUT / f"algae{suffix}.png", optimize=True)
+    print("wrote", sorted(p.name for p in OUT.iterdir()))
+
+
+if __name__ == "__main__":
+    main()

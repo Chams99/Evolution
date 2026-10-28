@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 
+import '../sim/world.dart';
 import 'lab_controller.dart';
 import 'progress_store.dart';
 import 'theme.dart';
@@ -150,7 +151,8 @@ class _LabScreenState extends State<LabScreen> with SingleTickerProviderStateMix
                     child: TabBarView(
                       children: [
                         ListView(
-                          padding: const EdgeInsets.only(top: 18),
+                          // Right padding keeps content clear of the scrollbar.
+                          padding: const EdgeInsets.fromLTRB(0, 18, 14, 24),
                           children: [
                             FieldGuide(controller: _controller, overlay: false),
                             const SizedBox(height: 22),
@@ -158,14 +160,16 @@ class _LabScreenState extends State<LabScreen> with SingleTickerProviderStateMix
                           ],
                         ),
                         ListView(
-                          padding: const EdgeInsets.only(top: 18),
+                          // Right padding keeps content clear of the scrollbar.
+                          padding: const EdgeInsets.fromLTRB(0, 18, 14, 24),
                           children: [
                             if (_controller.selected == null) InspectorPanel(controller: _controller),
                             ChartsPanel(controller: _controller),
                           ],
                         ),
                         ListView(
-                          padding: const EdgeInsets.only(top: 18),
+                          // Right padding keeps content clear of the scrollbar.
+                          padding: const EdgeInsets.fromLTRB(0, 18, 14, 24),
                           children: [SetupPanel(controller: _controller)],
                         ),
                       ],
@@ -204,31 +208,28 @@ class _LabScreenState extends State<LabScreen> with SingleTickerProviderStateMix
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: _Field(controller: _controller, compact: compact),
                 ),
+                // Tools and playback right under the view, then what is happening, then the numbers.
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                   child: Center(
-                    child: ToolDock(controller: _controller, compact: compact),
+                    child: ToolDock(controller: _controller, compact: compact, showHint: compact),
                   ),
                 ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                  child: TransportBar(controller: _controller, compact: compact),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
                   child: FieldCaption(controller: _controller),
                 ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
-                    child: Readouts(controller: _controller),
-                  ),
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                  child: Readouts(controller: _controller, spread: true),
                 ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
+                  padding: const EdgeInsets.fromLTRB(16, 6, 16, 12),
                   child: TraitStrip(controller: _controller),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
-                  child: TransportBar(controller: _controller, compact: compact),
                 ),
               ],
             ),
@@ -342,6 +343,16 @@ class _Field extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final world = controller.world;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // On small views the lamp badge drops its second phrase so it never meets the sample label.
+        final tight = constraints.maxWidth < 560;
+        return _stack(context, world, tight);
+      },
+    );
+  }
+
+  Widget _stack(BuildContext context, World world, bool tight) {
     return Stack(
       children: [
         FieldView(controller: controller),
@@ -356,7 +367,11 @@ class _Field extends StatelessWidget {
           right: 120,
           child: MilestoneFeed(controller: controller, compact: compact),
         ),
-        Positioned(right: 10, top: 10, child: SeasonBadge(controller: controller)),
+        Positioned(
+          right: 10,
+          top: 10,
+          child: SeasonBadge(controller: controller, compact: tight),
+        ),
         if (world.extinct)
           Positioned.fill(
             child: Center(

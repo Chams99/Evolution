@@ -343,8 +343,28 @@ class LabController extends ChangeNotifier {
 
   String exportCsv() => samplesToCsv(_world.history);
 
-  /// One plain sentence about what selection is doing right now.
+  /// One plain sentence about what selection is doing right now. It holds for
+  /// a few seconds before changing, so the caption can be read when the
+  /// readings hover around a threshold.
   String get insight {
+    if (_world.extinct) return _readInsight();
+    return _insight ??= _readInsight();
+  }
+
+  String? _insight;
+  DateTime _insightAt = DateTime.fromMillisecondsSinceEpoch(0);
+  static const _insightHold = Duration(seconds: 5);
+
+  void _updateInsight() {
+    final next = _readInsight();
+    final now = DateTime.now();
+    if (_insight == null || (next != _insight && now.difference(_insightAt) >= _insightHold)) {
+      _insight = next;
+      _insightAt = now;
+    }
+  }
+
+  String _readInsight() {
     if (_world.extinct) return 'The drop is sterile. Every family has died out.';
     if (_world.organisms.length < 6) return 'Too few microbes left to say what is being selected.';
     Trait? strongest;
@@ -398,6 +418,7 @@ class LabController extends ChangeNotifier {
           ? reading
           : previous + (reading - previous) * _selectionSmoothing;
     }
+    _updateInsight();
     _checkMilestones();
     _refreshLesson();
   }
@@ -408,6 +429,7 @@ class LabController extends ChangeNotifier {
     _familyMark = _world.familySizes.length;
     _kills = _world.totalKills;
     _lastCrashAt = double.negativeInfinity;
+    _insight = null;
     _traitMarks.clear();
     for (final trait in Trait.values) {
       _selection[trait] = null;

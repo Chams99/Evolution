@@ -217,9 +217,12 @@ class _RecDotState extends State<_RecDot> with SingleTickerProviderStateMixin {
 /// The lamp over the slide. Its brightness cycles like seasons and drives how
 /// fast algae grow. Shown only when the cycle is on.
 class SeasonBadge extends StatelessWidget {
-  const SeasonBadge({super.key, required this.controller});
+  const SeasonBadge({super.key, required this.controller, this.compact = false});
 
   final LabController controller;
+
+  /// Only the lamp state, for small views.
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -228,11 +231,12 @@ class SeasonBadge extends StatelessWidget {
       valueListenable: controller.samples,
       builder: (context, _, _) {
         final supply = controller.world.foodSupply;
-        final (label, color) = supply < 0.75
-            ? ('LAMP DIM · ALGAE SCARCE', Palette.terracotta)
+        final (lamp, algae, color) = supply < 0.75
+            ? ('LAMP DIM', 'ALGAE SCARCE', Palette.terracotta)
             : supply > 1.25
-            ? ('LAMP BRIGHT · ALGAE BLOOMING', Palette.food)
-            : ('LAMP STEADY', Palette.gold);
+            ? ('LAMP BRIGHT', 'ALGAE BLOOMING', Palette.food)
+            : ('LAMP STEADY', null, Palette.gold);
+        final label = compact || algae == null ? lamp : '$lamp · $algae';
         return Container(
           padding: const EdgeInsets.fromLTRB(10, 6, 10, 7),
           decoration: BoxDecoration(color: Palette.hud, borderRadius: BorderRadius.circular(4)),
@@ -250,7 +254,7 @@ class SeasonBadge extends StatelessWidget {
               ),
               const SizedBox(height: 5),
               SizedBox(
-                width: 86,
+                width: compact ? 64 : 86,
                 height: 3,
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(2),
@@ -271,13 +275,40 @@ class SeasonBadge extends StatelessWidget {
 
 /// Tools for poking the world: inspect and pipette, UV pulse, drain and add algae.
 class ToolDock extends StatelessWidget {
-  const ToolDock({super.key, required this.controller, this.compact = false});
+  const ToolDock({super.key, required this.controller, this.compact = false, this.showHint = false});
 
   final LabController controller;
+
+  /// Icons only.
   final bool compact;
+
+  /// A line under the icons saying what the active tool does, for touch
+  /// screens where there is no hover tooltip.
+  final bool showHint;
 
   @override
   Widget build(BuildContext context) {
+    final dock = _dock();
+    if (!showHint) return dock;
+    final hint = switch (controller.tool) {
+      Tool.hand => 'Tap a microbe to follow it, or empty water to add algae',
+      Tool.uv => 'Tap the drop to fire a UV pulse',
+    };
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        dock,
+        const SizedBox(height: 6),
+        Text(
+          hint,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 12, color: Palette.muted),
+        ),
+      ],
+    );
+  }
+
+  Widget _dock() {
     final extinct = controller.world.extinct;
     return Container(
       height: 42,

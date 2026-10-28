@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Palette.ink in lib/app/theme.dart -->
+    <color name="ink">#09080E</color>
     <color name="ic_launcher_background">#09080E</color>
 </resources>
