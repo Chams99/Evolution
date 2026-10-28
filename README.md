@@ -134,10 +134,14 @@ tool/
   render_sprites.py   Renders the microbe and algae figures at three sizes
   render_icons.py     Renders the app icon, every platform's icon set and the launch images
   render_social.py    Composes the link-preview card from a screenshot
-web/index.html    Branded loading screen, theme colour and link-preview tags
+web/
+  index.html          Loading screen with step-by-step progress, theme colour and link-preview tags
+  flutter_bootstrap.js  Starts the app and reports each start-up step to the loading screen
 ```
 
 The engine never imports Flutter, so the tests, the balance tool and the app all run exactly the same rules. The microscope view repaints from a `ValueNotifier` on every frame, and the charts redraw only when a new sample arrives, once per simulated second. Ten simulated minutes run headless in one to four seconds, depending on population size.
+
+**Waiting is shown, never hidden.** The site is built to WebAssembly where the browser supports it (Chrome, Edge and Android), which downloads about 15% less than the JavaScript build that Firefox and Safari get. On a first visit the page shows a progress bar that follows the real start-up steps, and the microbe figures download alongside the engine, so the first frame already shows them. Repeat visits load from the browser cache and opened in about a quarter of a second in testing. In an experiment, *Finish now* runs the rest of the time a slice per frame, so the drops and the progress bar race ahead instead of the screen freezing.
 
 ## Run it locally
 

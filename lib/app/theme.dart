@@ -93,6 +93,17 @@ ThemeData buildTheme() {
   return base.copyWith(
     scaffoldBackgroundColor: Palette.ink,
     dividerColor: Palette.line,
+    // Android's own fade-forward transition (with the predictive back gesture)
+    // on Android, Windows and Linux; iOS and macOS keep their swipe-back slide.
+    pageTransitionsTheme: const PageTransitionsTheme(
+      builders: {
+        TargetPlatform.android: PredictiveBackPageTransitionsBuilder(),
+        TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+        TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+        TargetPlatform.windows: FadeForwardsPageTransitionsBuilder(backgroundColor: Palette.ink),
+        TargetPlatform.linux: FadeForwardsPageTransitionsBuilder(backgroundColor: Palette.ink),
+      },
+    ),
     textTheme: base.textTheme
         .apply(bodyColor: Palette.cream, displayColor: Palette.cream)
         .copyWith(

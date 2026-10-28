@@ -29,58 +29,71 @@ class _IntroOverlayState extends State<IntroOverlay> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context).textTheme;
     final last = _page == _pages - 1;
-    return Material(
-      color: Palette.ink.withValues(alpha: 0.78),
-      child: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 520),
-              child: Container(
-                padding: const EdgeInsets.fromLTRB(24, 22, 24, 18),
-                decoration: BoxDecoration(
-                  color: Palette.surface,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Palette.lineStrong),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text('${_page + 1} / $_pages', style: Styles.label.copyWith(color: Palette.terracotta)),
-                    const SizedBox(height: 8),
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 180),
-                      child: KeyedSubtree(key: ValueKey(_page), child: _content(theme)),
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      children: [
-                        TextButton(
-                          onPressed: _finish,
-                          style: TextButton.styleFrom(foregroundColor: Palette.muted),
-                          child: Text(last ? 'Explore freely' : 'Skip'),
-                        ),
-                        const Spacer(),
-                        if (_page > 0)
+    // The system back button steps back through the pages, then closes the
+    // tour, instead of leaving the app.
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        if (_page > 0) {
+          setState(() => _page--);
+        } else {
+          _finish();
+        }
+      },
+      child: Material(
+        color: Palette.ink.withValues(alpha: 0.78),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 520),
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(24, 22, 24, 18),
+                  decoration: BoxDecoration(
+                    color: Palette.surface,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Palette.lineStrong),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('${_page + 1} / $_pages', style: Styles.label.copyWith(color: Palette.terracotta)),
+                      const SizedBox(height: 8),
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 180),
+                        child: KeyedSubtree(key: ValueKey(_page), child: _content(theme)),
+                      ),
+                      const SizedBox(height: 20),
+                      Row(
+                        children: [
                           TextButton(
-                            onPressed: () => setState(() => _page--),
-                            style: TextButton.styleFrom(foregroundColor: Palette.cream),
-                            child: const Text('Back'),
+                            onPressed: _finish,
+                            style: TextButton.styleFrom(foregroundColor: Palette.muted),
+                            child: Text(last ? 'Explore freely' : 'Skip'),
                           ),
-                        const SizedBox(width: 6),
-                        FilledButton(
-                          onPressed: last ? () => _finish(startLesson: true) : () => setState(() => _page++),
-                          style: FilledButton.styleFrom(
-                            backgroundColor: Palette.gold,
-                            foregroundColor: Palette.surface,
+                          const Spacer(),
+                          if (_page > 0)
+                            TextButton(
+                              onPressed: () => setState(() => _page--),
+                              style: TextButton.styleFrom(foregroundColor: Palette.cream),
+                              child: const Text('Back'),
+                            ),
+                          const SizedBox(width: 6),
+                          FilledButton(
+                            onPressed: last ? () => _finish(startLesson: true) : () => setState(() => _page++),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: Palette.gold,
+                              foregroundColor: Palette.surface,
+                            ),
+                            child: Text(last ? 'Start the first lesson' : 'Next'),
                           ),
-                          child: Text(last ? 'Start the first lesson' : 'Next'),
-                        ),
-                      ],
-                    ),
-                  ],
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

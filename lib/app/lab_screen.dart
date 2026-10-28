@@ -77,8 +77,24 @@ class _LabScreenState extends State<LabScreen> with SingleTickerProviderStateMix
                       constraints.maxWidth >= _wideBreakpoint ? _wide(context) : _narrow(context, constraints),
                 ),
               ),
-              if (_controller.showIntro) Positioned.fill(child: IntroOverlay(controller: _controller)),
-              if (_controller.showStart) Positioned.fill(child: StartOverlay(controller: _controller)),
+              // A short fade instead of popping, so the lab is revealed rather than swapped in.
+              // While an overlay is up, screen readers stay on it instead of the lab behind.
+              Positioned.fill(
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 220),
+                  child: _controller.showStart
+                      ? BlockSemantics(
+                          key: const ValueKey('start'),
+                          child: StartOverlay(controller: _controller),
+                        )
+                      : _controller.showIntro
+                      ? BlockSemantics(
+                          key: const ValueKey('intro'),
+                          child: IntroOverlay(controller: _controller),
+                        )
+                      : const SizedBox.shrink(),
+                ),
+              ),
             ],
           ),
         ),

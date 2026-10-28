@@ -69,16 +69,16 @@ class Sprites {
 
   static Future<void> _load() async {
     try {
-      final levels = <SpriteLevel>[];
-      for (final MapEntry(key: suffix, value: factor) in _levels.entries) {
-        final images = await Future.wait([
-          _image('assets/sprites/cell_tint$suffix.png'),
-          _image('assets/sprites/cell_overlay$suffix.png'),
-          _image('assets/sprites/cell_ghost$suffix.png'),
-          _image('assets/sprites/algae$suffix.png'),
-        ]);
-        levels.add(SpriteLevel(factor, images[0], images[1], images[2], images[3]));
-      }
+      // All levels at once: on the web each image is a separate request.
+      final levels = await Future.wait([
+        for (final MapEntry(key: suffix, value: factor) in _levels.entries)
+          Future.wait([
+            _image('assets/sprites/cell_tint$suffix.png'),
+            _image('assets/sprites/cell_overlay$suffix.png'),
+            _image('assets/sprites/cell_ghost$suffix.png'),
+            _image('assets/sprites/algae$suffix.png'),
+          ]).then((images) => SpriteLevel(factor, images[0], images[1], images[2], images[3])),
+      ]);
       current.value = Sprites._(levels);
     } catch (error) {
       debugPrint('Microbe figures could not be loaded, using vector drawings: $error');

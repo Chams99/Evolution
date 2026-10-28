@@ -299,10 +299,12 @@ void main() {
           home: ExperimentScreen(experiment: experiment),
         ),
       );
-      await tester.tap(find.text('Add predators'));
-      await tester.tap(find.text('Size'));
-      await tester.tap(find.text('higher'));
-      await tester.pump();
+      for (final choice in ['Add predators', 'Size', 'higher']) {
+        await tester.ensureVisible(find.text(choice));
+        await tester.pump();
+        await tester.tap(find.text(choice));
+        await tester.pump();
+      }
       expect(find.textContaining('size will end up higher with predators'), findsOneWidget);
       await tester.ensureVisible(find.text('Run the experiment'));
       await tester.pump();
@@ -310,7 +312,12 @@ void main() {
       await frames(tester, 3);
       expect(find.text('CONTROL'), findsOneWidget);
       await tester.tap(find.text('Finish now'));
-      await frames(tester, 2);
+      await tester.pump(const Duration(milliseconds: 16));
+      expect(find.text('Finishing…'), findsOneWidget);
+      for (var i = 0; i < 2000 && experiment.running; i++) {
+        await tester.pump(const Duration(milliseconds: 16));
+      }
+      await tester.pump();
       expect(find.text('Prediction confirmed'), findsOneWidget);
       await tester.ensureVisible(find.text('Repeat with a new seed'));
       await tester.pump();

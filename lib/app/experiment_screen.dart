@@ -409,9 +409,9 @@ class _Run extends StatelessWidget {
               const SizedBox(width: 12),
               if (x.running)
                 TextButton(
-                  onPressed: x.finishNow,
-                  style: TextButton.styleFrom(foregroundColor: Palette.cream),
-                  child: const Text('Finish now'),
+                  onPressed: x.finishing ? null : x.finishNow,
+                  style: TextButton.styleFrom(foregroundColor: Palette.cream, disabledForegroundColor: Palette.muted),
+                  child: Text(x.finishing ? 'Finishing…' : 'Finish now'),
                 ),
             ],
           ),
@@ -482,20 +482,24 @@ class _Drop extends StatelessWidget {
           builder: (context, _, _) {
             final world = controller.world;
             final mean = world.extinct ? null : world.history.last.traits[trait]!.mean;
-            return Row(
+            // The counts move under the title when both don't fit on one line.
+            return Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 12,
+              runSpacing: 4,
               children: [
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    title,
-                    overflow: TextOverflow.ellipsis,
-                    style: Styles.label.copyWith(color: color),
-                  ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(title, style: Styles.label.copyWith(color: color)),
+                  ],
                 ),
                 Text(
                   '${world.organisms.length} microbes · ${trait.label.toLowerCase()} '

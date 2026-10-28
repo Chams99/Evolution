@@ -5,9 +5,11 @@ import 'app/lab_screen.dart';
 import 'app/sprites.dart';
 import 'app/theme.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  Sprites.load();
+  // The figures are small. Waiting for them means the first frame already
+  // shows the real microbes instead of swapping in from simpler shapes.
+  await Sprites.load().timeout(const Duration(seconds: 2), onTimeout: () {});
   runApp(const EvolutionApp());
 }
 

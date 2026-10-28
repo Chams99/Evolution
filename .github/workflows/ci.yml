@@ -48,7 +48,8 @@ jobs:
           flutter-version: 3.41.2
           cache: true
       - run: flutter pub get
-      - run: flutter build web --release --base-href /Evolution/
+      # WebAssembly where the browser supports it (smaller download); others get the JavaScript build.
+      - run: flutter build web --release --wasm --base-href /Evolution/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

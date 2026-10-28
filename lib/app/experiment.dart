@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/foundation.dart';
 
 import '../sim/genome.dart';
@@ -149,24 +151,43 @@ class Experiment extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// True while [finishNow] is running the rest of the experiment.
+  bool get finishing => _finishing && running;
+  bool _finishing = false;
+
+  /// How much of each frame [finishNow] may spend simulating. The rest keeps
+  /// the screen drawing, so the drops and the progress bar visibly race ahead.
+  static const _frameBudget = Duration(milliseconds: 12);
+
   void advance(Duration delta) {
     final a = control, b = treated;
     if (a == null || b == null || done) return;
-    a.advance(delta);
-    b.advance(delta);
-    if (a.world.seconds >= duration || a.world.extinct || b.world.extinct) _finish();
+    if (_finishing) {
+      final clock = Stopwatch()..start();
+      do {
+        final step = math.min(1.0, duration - a.world.seconds);
+        a.fastForward(step);
+        b.fastForward(step);
+      } while (clock.elapsed < _frameBudget && !_over(a, b));
+    } else {
+      a.advance(delta);
+      b.advance(delta);
+    }
+    if (_over(a, b)) _finish();
   }
 
-  /// Runs the rest of the experiment at once.
+  bool _over(LabController a, LabController b) => a.world.seconds >= duration || a.world.extinct || b.world.extinct;
+
+  /// Runs the rest of the experiment as fast as the device allows, a slice
+  /// per frame, instead of freezing the screen until it is done.
   void finishNow() {
-    final a = control, b = treated;
-    if (a == null || b == null || done) return;
-    a.fastForward(duration - a.world.seconds);
-    b.fastForward(duration - b.world.seconds);
-    _finish();
+    if (!running || _finishing) return;
+    _finishing = true;
+    notifyListeners();
   }
 
   void _finish() {
+    _finishing = false;
     final a = control!, b = treated!;
     a.pause();
     b.pause();
@@ -193,6 +214,7 @@ class Experiment extends ChangeNotifier {
   }
 
   void _dispose() {
+    _finishing = false;
     control?.dispose();
     treated?.dispose();
     control = null;

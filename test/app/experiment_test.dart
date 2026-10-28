@@ -14,7 +14,7 @@ void main() {
       addTearDown(experiment.dispose);
       for (var run = 0; run < 3; run++) {
         experiment.start(nextSeed: run > 0);
-        experiment.finishNow();
+        finish(experiment);
         expect(experiment.results.last.confirmed, isTrue, reason: 'seed ${experiment.seed}');
       }
       expect(experiment.results.map((r) => r.seed), [1, 2, 3]);
@@ -30,6 +30,20 @@ void main() {
     expect(b.config.seed, a.config.seed);
   });
 
+  test('Finish now runs the rest a slice per frame, then gives the verdict', () {
+    final experiment = Experiment()..start();
+    addTearDown(experiment.dispose);
+    experiment.finishNow();
+    expect(experiment.finishing, isTrue);
+    experiment.advance(const Duration(milliseconds: 16));
+    expect(experiment.elapsed, greaterThan(0));
+    expect(experiment.done, isFalse, reason: 'one frame should not run the whole experiment');
+    finish(experiment);
+    expect(experiment.finishing, isFalse);
+    expect(experiment.elapsed, Experiment.duration);
+    expect(experiment.results, hasLength(1));
+  });
+
   test('a run finishes on its own after the set duration', () {
     final experiment = Experiment()..start();
     addTearDown(experiment.dispose);
@@ -40,4 +54,12 @@ void main() {
     expect(experiment.elapsed, greaterThanOrEqualTo(Experiment.duration));
     expect(experiment.control!.playing, isFalse);
   });
+}
+
+/// Presses Finish now and plays frames until the verdict is in.
+void finish(Experiment experiment) {
+  experiment.finishNow();
+  for (var i = 0; i < 100000 && experiment.running; i++) {
+    experiment.advance(const Duration(milliseconds: 16));
+  }
 }
