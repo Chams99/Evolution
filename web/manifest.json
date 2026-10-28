@@ -1,12 +1,12 @@
 {
-    "name": "evolution_game",
-    "short_name": "evolution_game",
+    "name": "Evolution",
+    "short_name": "Evolution",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#ffffff",
-    "theme_color": "#ffffff",
-    "description": "A new Flutter project.",
-    "orientation": "portrait-primary",
+    "background_color": "#09080E",
+    "theme_color": "#09080E",
+    "description": "Natural selection sandbox: organisms inherit size, speed and sense, pay for them in energy, and adapt.",
+    "orientation": "any",
     "prefer_related_applications": false,
     "icons": [
         {
