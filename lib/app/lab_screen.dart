@@ -62,7 +62,7 @@ class _LabScreenState extends State<LabScreen> with SingleTickerProviderStateMix
         const SingleActivator(LogicalKeyboardKey.arrowRight): _controller.stepSecond,
         const SingleActivator(LogicalKeyboardKey.keyR): _controller.restart,
         const SingleActivator(LogicalKeyboardKey.digit1): () => _controller.setTool(Tool.hand),
-        const SingleActivator(LogicalKeyboardKey.digit2): () => _controller.setTool(Tool.meteor),
+        const SingleActivator(LogicalKeyboardKey.digit2): () => _controller.setTool(Tool.uv),
       },
       child: Focus(
         autofocus: true,

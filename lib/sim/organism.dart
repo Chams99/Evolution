@@ -55,7 +55,7 @@ class Food {
 enum EventKind { birth, death, strike, famine, rain }
 
 /// Something that happened at a place and time, kept briefly so the view can
-/// draw it (birth ripples, death fades, meteor shockwaves).
+/// draw it (birth ripples, death fades, UV flashes).
 class WorldEvent {
   const WorldEvent({
     required this.kind,

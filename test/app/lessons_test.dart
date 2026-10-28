@@ -35,10 +35,10 @@ void main() {
     controller.dispose();
   });
 
-  test('the bottleneck lesson needs a meteor strike, then a recovery', () async {
+  test('the bottleneck lesson needs a UV pulse, then a recovery', () async {
     final lesson = lessons.firstWhere((l) => l.id == 'bottleneck');
     final controller = LabController()..startLesson(lesson);
-    expect(controller.tool, Tool.meteor);
+    expect(controller.tool, Tool.uv);
     for (var i = 0; i < 60; i++) {
       controller.stepSecond();
     }

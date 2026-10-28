@@ -59,7 +59,7 @@ class Sample {
   final int diedOfAge;
   final int eaten;
 
-  /// Killed by meteor strikes.
+  /// Killed by UV pulses.
   final int struck;
 
   final int maxGeneration;

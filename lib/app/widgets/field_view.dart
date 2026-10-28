@@ -3,13 +3,11 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../sim/organism.dart';
+import '../../sim/world.dart';
 import '../lab_controller.dart';
 import '../microbes.dart';
 import '../sprites.dart';
 import '../theme.dart';
-
-/// Radius of the UV pulse tool, in world units (micrometres).
-const double meteorRadius = 70;
 
 /// Microbes are drawn larger than their collision radius so their parts read.
 const double bodyScale = 1.7;
@@ -119,7 +117,7 @@ class _FieldViewState extends State<FieldView> {
   Widget build(BuildContext context) {
     final controller = widget.controller;
     final config = controller.config;
-    final uv = controller.tool == Tool.meteor;
+    final uv = controller.tool == Tool.uv;
     return AspectRatio(
       aspectRatio: config.width / config.height,
       child: LayoutBuilder(
@@ -484,13 +482,13 @@ class _FieldPainter extends CustomPainter {
     }
 
     final aim = hover.value;
-    if (controller.tool == Tool.meteor && aim != null) {
+    if (controller.tool == Tool.uv && aim != null) {
       final c = aim * scale;
-      canvas.drawCircle(c, meteorRadius * scale, Paint()..color = Palette.terracotta.withValues(alpha: 0.1));
+      canvas.drawCircle(c, World.strikeRadius * scale, Paint()..color = Palette.terracotta.withValues(alpha: 0.1));
       _dashedCircle(
         canvas,
         c,
-        meteorRadius * scale,
+        World.strikeRadius * scale,
         Paint()
           ..color = Palette.terracotta.withValues(alpha: 0.9)
           ..style = PaintingStyle.stroke

@@ -11,7 +11,7 @@ void main(List<String> args) {
     for (final seed in [1, 2, 3]) {
       final world = World(preset.config.copyWith(seed: seed));
       final watch = Stopwatch()..start();
-      final line = StringBuffer('${preset.label.padRight(10)} seed $seed |');
+      final line = StringBuffer('${preset.label.padRight(14)} seed $seed |');
       for (var t = 0; t < seconds; t += seconds ~/ 6) {
         world.step(world.config.ticksPerSecond * (seconds ~/ 6));
         final s = world.history.last;

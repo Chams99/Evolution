@@ -115,13 +115,13 @@ class WorldConfig {
 /// Starting points that push selection in clearly different directions. Each
 /// one is framed as a sample of water under the microscope.
 enum Preset {
-  temperate(
+  pond(
     'Pond',
     'POND WATER',
     'A drop from a healthy pond. Steady algae and a gentle light cycle. Speed and sense creep up slowly.',
     WorldConfig(),
   ),
-  drought(
+  puddle(
     'Drying puddle',
     'DRYING PUDDLE',
     'Scarce algae and long dim spells. Numbers crash every cycle, and running costs too much to get faster.',
@@ -133,7 +133,7 @@ enum Preset {
     'Algae everywhere. The largest crowds, and speed rises fastest as everyone races for the next cell.',
     WorldConfig(foodPerSecond: 14, foodEnergy: 45, seasonStrength: 0.2),
   ),
-  hunters(
+  predators(
     'Predators',
     'POND WITH PREDATORS',
     'Big microbes can engulf smaller ones. Size, speed and eyesight escalate together.',

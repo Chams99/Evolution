@@ -27,16 +27,19 @@ class World {
   /// Samples kept in memory (one per simulated second).
   static const int historyLimit = 7200;
 
-  final WorldConfig config;
-  final Rng _rng;
-  final SpatialGrid<Food> _foodGrid;
-  final SpatialGrid<Organism> _organismGrid;
-
   /// Events kept for the view; older ones are dropped.
   static const int eventLimit = 800;
 
   /// How far back [selection] looks, in simulated seconds.
   static const double selectionWindow = 30;
+
+  /// Default reach of [strike], in world units. The view draws its aim circle with it.
+  static const double strikeRadius = 70;
+
+  final WorldConfig config;
+  final Rng _rng;
+  final SpatialGrid<Food> _foodGrid;
+  final SpatialGrid<Organism> _organismGrid;
 
   final List<Organism> organisms = [];
   final List<Food> food = [];
@@ -108,9 +111,9 @@ class World {
     }
   }
 
-  /// Meteor strike: kills every organism and destroys all food within [radius].
+  /// UV pulse: kills every organism and destroys all food within [radius].
   /// Returns how many organisms died.
-  int strike(double x, double y, {double radius = 70}) {
+  int strike(double x, double y, {double radius = strikeRadius}) {
     var killed = 0;
     for (final o in organisms) {
       final dx = o.x - x, dy = o.y - y;

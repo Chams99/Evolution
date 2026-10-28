@@ -368,7 +368,7 @@ class _SampleThumbPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final rect = Offset.zero & size;
-    final dim = preset == Preset.drought;
+    final dim = preset == Preset.puddle;
     canvas.drawRect(
       rect,
       Paint()
@@ -381,7 +381,7 @@ class _SampleThumbPainter extends CustomPainter {
     final rng = math.Random(preset.index * 31 + 7);
     final algae = switch (preset) {
       Preset.bloom => 26,
-      Preset.drought => 3,
+      Preset.puddle => 3,
       _ => 9,
     };
     final sprites = Sprites.current.value;
@@ -402,18 +402,18 @@ class _SampleThumbPainter extends CustomPainter {
     }
 
     final cells = <MicrobeDraw>[];
-    final count = preset == Preset.hunters ? 5 : (preset == Preset.bloom ? 9 : 6);
+    final count = preset == Preset.predators ? 5 : (preset == Preset.bloom ? 9 : 6);
     for (var i = 0; i < count; i++) {
-      final big = preset == Preset.hunters && i < 2;
+      final big = preset == Preset.predators && i < 2;
       cells.add(
         MicrobeDraw(
           center: Offset(size.width * (0.12 + rng.nextDouble() * 0.76), size.height * (0.15 + rng.nextDouble() * 0.7)),
           radius: big ? 10 : 6,
           color: familyColor(big ? 5 : i % 4),
           heading: rng.nextDouble() * 2 * math.pi,
-          speed: preset == Preset.bloom ? 2.2 : (preset == Preset.drought ? 0.7 : 1.2),
+          speed: preset == Preset.bloom ? 2.2 : (preset == Preset.puddle ? 0.7 : 1.2),
           sense: big ? 120 : 40,
-          energyShare: preset == Preset.drought ? 0.2 : 0.6,
+          energyShare: preset == Preset.puddle ? 0.2 : 0.6,
           seed: i,
         ),
       );

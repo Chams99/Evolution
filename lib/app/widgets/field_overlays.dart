@@ -269,7 +269,7 @@ class SeasonBadge extends StatelessWidget {
   }
 }
 
-/// Tools for poking the world: inspect and feed, meteor, famine, food rain.
+/// Tools for poking the world: inspect and pipette, UV pulse, drain and add algae.
 class ToolDock extends StatelessWidget {
   const ToolDock({super.key, required this.controller, this.compact = false});
 
@@ -302,10 +302,10 @@ class ToolDock extends StatelessWidget {
             icon: Icons.flare,
             label: 'UV pulse',
             hint: 'Tap to sterilise a circle of the drop with ultraviolet light (2)',
-            selected: controller.tool == Tool.meteor,
+            selected: controller.tool == Tool.uv,
             compact: compact,
             accent: Palette.terracotta,
-            onTap: extinct ? null : () => controller.setTool(Tool.meteor),
+            onTap: extinct ? null : () => controller.setTool(Tool.uv),
           ),
           Container(width: 1, height: 22, margin: const EdgeInsets.symmetric(horizontal: 4), color: Palette.line),
           _ToolButton(

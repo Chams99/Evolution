@@ -15,7 +15,7 @@ enum Tool {
   hand,
 
   /// Strike everything within a radius.
-  meteor,
+  uv,
 }
 
 enum MilestoneTone { neutral, good, bad }
@@ -46,7 +46,7 @@ class LessonRun {
 /// Owns the running world and the playback state. The screen calls [advance]
 /// on every frame; painters listen to [frame], charts to [samples].
 class LabController extends ChangeNotifier {
-  LabController({Preset preset = Preset.temperate, int seed = 1, ProgressStore? store})
+  LabController({Preset preset = Preset.pond, int seed = 1, ProgressStore? store})
     : _preset = preset,
       _config = preset.config.copyWith(seed: seed),
       _world = World(preset.config.copyWith(seed: seed)),
@@ -55,28 +55,21 @@ class LabController extends ChangeNotifier {
     _loadProgress();
   }
 
-  /// Builds a run from link parameters, e.g. `?preset=hunters&seed=3&at=300`
+  /// Builds a run from link parameters, e.g. `?preset=predators&seed=3&at=300`
   /// opens the Hunters preset with seed 3, already five minutes in.
   factory LabController.fromQuery(Map<String, String> query, {ProgressStore? store}) {
-    final preset = Preset.values.where((p) => p.name == query['preset']?.toLowerCase()).firstOrNull ?? Preset.temperate;
+    final preset = Preset.values.where((p) => p.name == query['preset']?.toLowerCase()).firstOrNull ?? Preset.pond;
     final seed = int.tryParse(query['seed'] ?? '') ?? 1;
     final controller = LabController(preset: preset, seed: seed, store: store);
+    final lesson = lessons.where((l) => l.id == query['lesson']).firstOrNull;
+    if (lesson != null) controller.startLesson(lesson);
     final at = double.tryParse(query['at'] ?? '');
     if (at != null && at > 0) {
-      final seconds = at.clamp(0, 3600).toDouble();
-      controller._world.step((seconds * controller._config.ticksPerSecond).round());
+      controller._world.step((at.clamp(0, 3600) * controller._config.ticksPerSecond).round());
       controller._resetTrackers();
     }
     final speed = int.tryParse(query['speed'] ?? '');
     if (speed != null && speeds.contains(speed)) controller._speed = speed;
-    final lesson = lessons.where((l) => l.id == query['lesson']).firstOrNull;
-    if (lesson != null) {
-      controller.startLesson(lesson);
-      if (at != null && at > 0) {
-        controller._world.step((at.clamp(0, 3600) * controller._config.ticksPerSecond).round());
-        controller._resetTrackers();
-      }
-    }
     // Someone opening a link to a specific run came for that run, not the tour.
     if (query.keys.any(const {'preset', 'seed', 'at', 'lesson'}.contains)) controller._skipIntro = true;
     return controller;
@@ -109,6 +102,7 @@ class LabController extends ChangeNotifier {
   bool _skipIntro = false;
   bool _showGuide = true;
   bool _progressLoaded = false;
+  bool _disposed = false;
 
   final List<Milestone> milestones = [];
   final Map<Trait, double?> _selection = {for (final t in Trait.values) t: null};
@@ -118,6 +112,7 @@ class LabController extends ChangeNotifier {
   int _populationMark = 0;
   int _familyMark = 0;
   int _kills = 0;
+  double _lastCrashAt = double.negativeInfinity;
   bool _selectedDeathReported = false;
   final Map<Trait, int> _traitMarks = {};
 
@@ -136,7 +131,6 @@ class LabController extends ChangeNotifier {
   Tool get tool => _tool;
   LessonRun? get lesson => _lesson;
   Set<String> get completedLessons => _completed;
-  bool get progressLoaded => _progressLoaded;
 
   /// True until the first-run introduction has been dismissed.
   bool get showIntro => _progressLoaded && !_introSeen && !_skipIntro;
@@ -250,7 +244,7 @@ class LabController extends ChangeNotifier {
   /// Applies the current tool at a point in world coordinates.
   void tapField(double x, double y) {
     switch (_tool) {
-      case Tool.meteor:
+      case Tool.uv:
         final killed = _world.strike(x, y);
         _milestone(
           killed == 0 ? 'UV pulse hit empty water' : 'UV pulse: $killed microbe${killed == 1 ? '' : 's'} killed',
@@ -327,9 +321,9 @@ class LabController extends ChangeNotifier {
     _lesson = LessonRun(lesson);
     _preset = lesson.preset;
     _config = lesson.config;
-    _tool = lesson.usesMeteor ? Tool.meteor : Tool.hand;
-    // Fast enough to see generations pass; the meteor lesson stays slow enough to aim.
-    _speed = lesson.usesMeteor ? 2 : 4;
+    _tool = lesson.usesUv ? Tool.uv : Tool.hand;
+    // Fast enough to see generations pass; the UV lesson stays slow enough to aim.
+    _speed = lesson.usesUv ? 2 : 4;
     restart(keepLesson: true);
   }
 
@@ -413,6 +407,7 @@ class LabController extends ChangeNotifier {
     _populationMark = _world.organisms.length;
     _familyMark = _world.familySizes.length;
     _kills = _world.totalKills;
+    _lastCrashAt = double.negativeInfinity;
     _traitMarks.clear();
     for (final trait in Trait.values) {
       _selection[trait] = null;
@@ -455,8 +450,9 @@ class LabController extends ChangeNotifier {
     if (history.length > 30) {
       final window = history.sublist(history.length - 31);
       final peak = window.fold<int>(0, (m, s) => s.population > m ? s.population : m);
-      final crashedRecently = milestones.any((m) => m.text.startsWith('Population crashed') && now.time - m.time < 40);
+      final crashedRecently = now.time - _lastCrashAt < 40;
       if (peak >= 20 && now.population <= peak * 0.5 && !crashedRecently) {
+        _lastCrashAt = now.time;
         final drop = ((1 - now.population / peak) * 100).round();
         final context = now.foodSupply < 0.8 ? ' while the lamp was dim' : '';
         _milestone('Population crashed $drop%$context', MilestoneTone.bad);
@@ -524,8 +520,6 @@ class LabController extends ChangeNotifier {
     milestones.add(Milestone(text, tone, _world.seconds));
     if (milestones.length > 40) milestones.removeAt(0);
   }
-
-  bool _disposed = false;
 
   @override
   void dispose() {

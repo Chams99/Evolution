@@ -92,7 +92,7 @@ void main() {
     await openTab(tester, 'SETUP');
     await tester.tap(find.text('Drying puddle'));
     await frames(tester, 2);
-    expect(controller.preset, Preset.drought);
+    expect(controller.preset, Preset.puddle);
     expect(find.text('DRYING PUDDLE · SEED 1'), findsOneWidget);
   });
 
@@ -114,12 +114,12 @@ void main() {
     expect(find.text('SPECIMEN #${target.id}'), findsOneWidget);
   });
 
-  testWidgets('the meteor tool strikes where you tap', (tester) async {
+  testWidgets('the UV tool strikes where you tap', (tester) async {
     final controller = await pumpLab(tester, const Size(1440, 900));
     await tester.tap(find.text('Pause'));
     await tester.tap(find.text('UV pulse'));
     await tester.pump();
-    expect(controller.tool, Tool.meteor);
+    expect(controller.tool, Tool.uv);
     final target = controller.world.organisms.firstWhere((o) => o.x > 200 && o.x < 560 && o.y > 120 && o.y < 420);
     await tester.tapAt(fieldPoint(tester, controller, target.x, target.y));
     await tester.pump();
@@ -234,9 +234,9 @@ void main() {
   });
 
   test('links can open a specific run', () {
-    final controller = LabController.fromQuery({'preset': 'hunters', 'seed': '7', 'at': '30', 'speed': '4'});
+    final controller = LabController.fromQuery({'preset': 'predators', 'seed': '7', 'at': '30', 'speed': '4'});
     addTearDown(controller.dispose);
-    expect(controller.preset, Preset.hunters);
+    expect(controller.preset, Preset.predators);
     expect(controller.config.seed, 7);
     expect(controller.world.seconds, 30);
     expect(controller.speed, 4);

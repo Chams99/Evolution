@@ -8,7 +8,7 @@ A live drop of pond water under a microscope, built with Flutter. Microbes hunt 
 
 ## What you are looking at
 
-The view works like a microscope camera feed, with a live indicator, ×400 magnification and a 50 µm scale bar. A **field guide** on the slide explains every shape, drawn exactly as it appears in the drop:
+The view works like a microscope camera feed, with a live indicator, ×400 magnification and a 50 µm scale bar. Nothing else sits on top of it. The **field guide** at the top of the Learn tab explains every shape, drawn exactly as it appears in the drop:
 
 - **A microbe** is a translucent cell. It swells and fills with granules as it eats.
 - **Two nuclei** mean it is about to divide. When it does, you see it pinch in two.
@@ -18,7 +18,7 @@ The view works like a microscope camera feed, with a live indicator, ×400 magni
 - **Algae** are the small green cells. They grow faster when the lamp is bright, and the lamp slowly brightens and dims.
 - **Ghosts and bursts** show deaths: grey and shrivelled for starvation, a burst for a microbe engulfed by a predator.
 
-A **caption** under the drop says what is happening in plain words, for example "4 divided and 32 died in the last 10 seconds. Smaller microbes are dividing most often right now". **Trait cards** show each trait's value, how far it has moved, and whether selection is pushing it up or down right now.
+A **caption** under the drop says what is happening in plain words, for example "4 divided and 32 died in the last 10 seconds. Smaller microbes are dividing most often right now". **Trait cards** under the controls show each trait's value, how far it has moved since the start, a trend line, and whether selection is pushing it up or down right now.
 
 Every microbe also gets a made-up Latin name from its family and its traits, such as *Wiggula velox* (fast), *Glorbia magna oculata* (large and sharp-eyed) or *Smudgella fulminans* (lightning fast). Hover over the name to see what each word means.
 
@@ -34,7 +34,7 @@ The **Learn** tab has five guided experiments. Each one sets up a sample, asks a
 | 4 | No variation, no evolution | Every microbe is a perfect clone. Can anything evolve? |
 | 5 | Bottleneck | A disaster wipes out most of the drop at random. What do the survivors pass on? |
 
-Lessons run at 4× so generations pass quickly. The **favoured** and **selected against** marks on the trait cards are a standardised selection differential: how far the parents of the last 30 seconds of births sit from the population mean. Progress is saved, and a short tour runs on the first visit.
+Lessons run at 4× so generations pass quickly (the bottleneck lesson runs at 2× so you can aim the UV pulse). The **favoured** and **selected against** marks on the trait cards are a standardised selection differential: how far the parents of the last 30 seconds of births sit from the population mean. Progress is saved, and a short tour runs on the first visit.
 
 ## Run the lab
 
@@ -45,7 +45,7 @@ Lessons run at 4× so generations pass quickly. The **favoured** and **selected 
 - **Compare samples.** Four samples push selection in different directions (see below), and every parameter can be tuned. The same seed always replays the same run.
 - **Control time.** Play at 1× to 16×, or step one simulated second at a time. Keyboard: `Space` plays or pauses, `→` steps, `R` restarts, `1` selects inspect and `2` the UV pulse.
 - **Keep the data.** Copy the full history as CSV, with one row per simulated second.
-- **Share a run or a lesson.** `?preset=hunters&seed=3&at=240` opens the predator sample with seed 3, four minutes in. `?lesson=bottleneck` opens a lesson directly.
+- **Share a run or a lesson.** `?preset=predators&seed=3&at=240` opens the predator sample with seed 3, four minutes in. `?lesson=bottleneck` opens a lesson directly.
 
 ## The model
 

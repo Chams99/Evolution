@@ -24,7 +24,7 @@ class Lesson {
     required this.explanation,
     required this.evaluate,
     this.preset,
-    this.usesMeteor = false,
+    this.usesUv = false,
   });
 
   final String id;
@@ -34,7 +34,7 @@ class Lesson {
   final Preset? preset;
   final String watch;
   final String explanation;
-  final bool usesMeteor;
+  final bool usesUv;
 
   /// Reads the world and returns progress. [memory] survives between calls
   /// within one attempt, for goals that happen in stages.
@@ -70,8 +70,8 @@ final lessons = <Lesson>[
     id: 'seasons',
     title: 'Boom and bust',
     question: 'The lamp brightens and dims, and algae grow with it. Does the population just follow the light?',
-    preset: Preset.drought,
-    config: Preset.drought.config.copyWith(seed: 1),
+    preset: Preset.puddle,
+    config: Preset.puddle.config.copyWith(seed: 1),
     watch: 'Watch the drop darken and brighten, and the population line against the shaded light cycle.',
     explanation:
         'The population peaks after the algae do and crashes after them, because microbes live on stored energy '
@@ -86,8 +86,8 @@ final lessons = <Lesson>[
     id: 'arms-race',
     title: 'Arms race',
     question: 'Big microbes can now engulf smaller ones. How do hunters and hunted respond?',
-    preset: Preset.hunters,
-    config: Preset.hunters.config.copyWith(seed: 2),
+    preset: Preset.predators,
+    config: Preset.predators.config.copyWith(seed: 2),
     watch: 'Watch the cells grow larger and their red eyespots grow bigger, and the bursts where one is engulfed.',
     explanation:
         'Being big lets you engulf others, so size spreads. Being eaten is the strongest selection there is, so '
@@ -121,9 +121,9 @@ final lessons = <Lesson>[
     id: 'bottleneck',
     title: 'Bottleneck',
     question: 'A disaster wipes out most of the drop at random. What do the survivors pass on?',
-    preset: Preset.temperate,
-    config: Preset.temperate.config.copyWith(seed: 4),
-    usesMeteor: true,
+    preset: Preset.pond,
+    config: Preset.pond.config.copyWith(seed: 4),
+    usesUv: true,
     watch: 'Fire UV pulses into the crowds, then watch the survivors refill the drop. Look at which colours are left.',
     explanation:
         'UV light does not care about traits: it kills whoever happens to be in the beam. The survivors are a '

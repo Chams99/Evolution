@@ -123,7 +123,7 @@ void main() {
   });
 
   group('disasters', () {
-    test('a meteor kills everything inside its radius and nothing outside', () {
+    test('a UV pulse kills everything inside its radius and nothing outside', () {
       final world = World(const WorldConfig(initialPopulation: 0, foodPerSecond: 0))..food.clear();
       world.organisms.addAll([
         Organism(id: 1, genome: const Genome(size: 1, speed: 1, sense: 40), x: 100, y: 100, energy: 50, heading: 0),
