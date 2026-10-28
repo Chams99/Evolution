@@ -119,13 +119,6 @@ class TransportBar extends StatelessWidget {
         ),
         _SpeedPicker(controller: controller),
         _Outlined(
-          label: controller.showSense ? 'Hide sense' : 'Show sense',
-          icon: controller.showSense ? Icons.blur_off : Icons.blur_on,
-          compact: compact,
-          tooltip: controller.showSense ? 'Hide sensing radii' : 'Draw every sensing radius',
-          onPressed: controller.toggleSense,
-        ),
-        _Outlined(
           label: 'Restart',
           icon: Icons.replay,
           compact: compact,
@@ -246,20 +239,15 @@ class ChartsPanel extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Section(
-              title: 'Population',
-              trailing: const _Key(items: [('organisms', Palette.cream), ('food', Palette.food)]),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  PopulationChart(samples: history),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Last second: ${latest.births} born, ${latest.starved} starved, '
-                    '${latest.diedOfAge} died of age${world.config.predation ? ', ${latest.eaten} eaten' : ''}. '
-                    'Shading shows the seasonal food supply.',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ],
+              title: 'Right now',
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                decoration: BoxDecoration(
+                  color: Palette.surface,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border(left: BorderSide(color: Palette.gold.withValues(alpha: 0.8), width: 2)),
+                ),
+                child: Text(controller.insight, style: const TextStyle(fontSize: 13.5, height: 1.45)),
               ),
             ),
             Section(
@@ -269,7 +257,32 @@ class ChartsPanel extends StatelessWidget {
                 style: Styles.label.copyWith(fontSize: 10, color: Palette.faint, fontWeight: FontWeight.w400),
               ),
               child: Column(
-                children: [for (final trait in Trait.values) _TraitRow(trait: trait, controller: controller)],
+                children: [
+                  for (final trait in Trait.values) _TraitRow(trait: trait, controller: controller),
+                  Text(
+                    '▲ favoured and ▼ selected against compare the parents of the last 30 seconds of births with '
+                    'the whole population.',
+                    style: Theme.of(context).textTheme.bodySmall!.copyWith(fontSize: 11.5),
+                  ),
+                ],
+              ),
+            ),
+            Section(
+              title: 'Population',
+              trailing: const _Key(items: [('organisms', Palette.cream), ('food', Palette.food)]),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  PopulationChart(samples: history),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Last second: ${latest.births} born, ${latest.starved} starved, '
+                    '${latest.diedOfAge} died of age${world.config.predation ? ', ${latest.eaten} eaten' : ''}'
+                    '${latest.struck > 0 ? ', ${latest.struck} hit by meteors' : ''}. '
+                    'Shading shows the seasonal food supply.',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
               ),
             ),
             Section(
@@ -335,9 +348,16 @@ class _TraitRow extends StatelessWidget {
                       : '${now.mean.toStringAsFixed(digits)} ± ${now.deviation.toStringAsFixed(digits)}',
                   style: Styles.readout.copyWith(fontSize: 12),
                 ),
-                Text(
-                  '${change >= 0 ? '+' : ''}${change.toStringAsFixed(0)}%',
-                  style: Styles.label.copyWith(fontSize: 10, fontWeight: FontWeight.w400, color: Palette.faint),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    Text(
+                      '${change >= 0 ? '+' : ''}${change.toStringAsFixed(0)}%',
+                      style: Styles.label.copyWith(fontSize: 10, fontWeight: FontWeight.w400, color: Palette.faint),
+                    ),
+                    const SizedBox(width: 6),
+                    _SelectionBadge(value: controller.selectionOf(trait), color: Palette.trait(trait)),
+                  ],
                 ),
               ],
             ),
@@ -346,6 +366,35 @@ class _TraitRow extends StatelessWidget {
             child: TraitChart(samples: history, trait: trait, range: controller.config.limits.of(trait)),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Whether a trait is currently favoured, from the smoothed selection reading.
+class _SelectionBadge extends StatelessWidget {
+  const _SelectionBadge({required this.value, required this.color});
+
+  final double? value;
+  final Color color;
+
+  static const _threshold = 0.2;
+
+  @override
+  Widget build(BuildContext context) {
+    final v = value;
+    final (text, tone, tip) = v == null
+        ? ('…', Palette.faint, 'Not enough recent births to measure selection yet')
+        : v > _threshold
+        ? ('▲', color, 'Favoured: recent parents sit ${v.toStringAsFixed(2)} sd above the population')
+        : v < -_threshold
+        ? ('▼', color, 'Selected against: recent parents sit ${(-v).toStringAsFixed(2)} sd below the population')
+        : ('–', Palette.faint, 'Neutral: recent parents look like the rest of the population');
+    return Tooltip(
+      message: tip,
+      child: Text(
+        text,
+        style: TextStyle(fontSize: 11, color: tone, fontWeight: FontWeight.w600),
       ),
     );
   }
@@ -391,7 +440,8 @@ class InspectorPanel extends StatelessWidget {
           return Section(
             title: 'Organism',
             child: Text(
-              'Tap an organism to follow it. Tap empty ground to drop a patch of food.',
+              'Tap an organism to follow it: its energy, its genome and its whole family. Tap empty ground to '
+              'drop a patch of food.',
               style: Theme.of(context).textTheme.bodySmall,
             ),
           );
@@ -405,7 +455,9 @@ class InspectorPanel extends StatelessWidget {
           DeathCause.starvation => 'Starved',
           DeathCause.oldAge => 'Died of old age',
           DeathCause.predation => 'Eaten',
+          DeathCause.disaster => 'Killed by a meteor',
         };
+        final family = world.livingDescendants(o.id);
         return Section(
           title: 'Organism #${o.id}',
           trailing: InkWell(
@@ -444,6 +496,20 @@ class InspectorPanel extends StatelessWidget {
               Text(
                 '${o.meals} meals · ${o.offspring} offspring${config.predation ? ' · ${o.kills} kills' : ''}',
                 style: Styles.readout.copyWith(fontSize: 12, color: Palette.muted),
+              ),
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.fromLTRB(12, 9, 12, 9),
+                decoration: BoxDecoration(color: Palette.surface, borderRadius: BorderRadius.circular(6)),
+                child: Text(
+                  family == 0
+                      ? (o.alive
+                            ? 'No living descendants yet. It needs ${threshold.round()} energy to split.'
+                            : 'This line has ended: none of its descendants are alive.')
+                      : '$family living descendant${family == 1 ? '' : 's'}, ringed on the field. '
+                            '${o.alive ? 'Its traits are spreading.' : 'Its line lives on after it.'}',
+                  style: const TextStyle(fontSize: 12.5, height: 1.4, color: Palette.muted),
+                ),
               ),
             ],
           ),
